@@ -1,0 +1,469 @@
+Page: Endocrine Quiz - Chapter Select
+
+```html
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Endocrine Module Quiz</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        archivo: ['Archivo', 'sans-serif'],
+        manrope: ['Manrope', 'sans-serif'],
+      },
+      colors: {
+        anatomy: { light: '#EFF6FF', DEFAULT: '#3B82F6', dark: '#1D4ED8' },
+        histology: { light: '#F5F3FF', DEFAULT: '#8B5CF6', dark: '#6D28D9' },
+        physiology: { light: '#ECFDF5', DEFAULT: '#10B981', dark: '#059669' },
+        biochem: { light: '#FFFBEB', DEFAULT: '#F59E0B', dark: '#D97706' },
+        pathology: { light: '#FEF2F2', DEFAULT: '#EF4444', dark: '#DC2626' },
+        pharma: { light: '#FFF7ED', DEFAULT: '#F97316', dark: '#EA580C' },
+        clinical: { light: '#ECFEFF', DEFAULT: '#06B6D4', dark: '#0891B2' },
+      }
+    }
+  }
+}
+</script>
+<style>
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .card-animate {
+    animation: fadeInUp 600ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .card-animate:nth-child(1) { animation-delay: 80ms; }
+  .card-animate:nth-child(2) { animation-delay: 160ms; }
+  .card-animate:nth-child(3) { animation-delay: 240ms; }
+  .card-animate:nth-child(4) { animation-delay: 320ms; }
+  .card-animate:nth-child(5) { animation-delay: 400ms; }
+  .chapter-card {
+    transition: all 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .chapter-card:hover {
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.12), 0 8px 20px -8px rgba(0, 0, 0, 0.08);
+  }
+  .chapter-card:active {
+    transform: translateY(-2px) scale(0.995);
+  }
+  .btn-start {
+    transition: all 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .btn-start:hover {
+    transform: scale(0.97);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+  .btn-start:active {
+    transform: scale(0.94);
+  }
+  .badge-pill {
+    transition: all 200ms ease;
+  }
+  .badge-pill:hover {
+    transform: scale(1.08);
+  }
+  .hero-blob-1 {
+    animation: float 6s ease-in-out infinite;
+  }
+  .hero-blob-2 {
+    animation: float 8s ease-in-out infinite reverse;
+  }
+  .dot-grid {
+    background-image: radial-gradient(circle, rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  .header-title {
+    animation: fadeInUp 500ms ease-out both;
+  }
+  .header-sub {
+    animation: fadeInUp 500ms ease-out 150ms both;
+  }
+  .header-stats {
+    animation: fadeInUp 500ms ease-out 300ms both;
+  }
+</style>
+</head>
+<body>
+<div class="min-h-screen bg-gray-50 font-manrope">
+
+  <!-- HERO HEADER -->
+  <div class="relative overflow-hidden bg-white border-b border-gray-100">
+    <!-- Background decorations -->
+    <div class="absolute inset-0 dot-grid opacity-50"></div>
+    <div class="hero-blob-1 absolute -top-20 -right-20 w-72 h-72 rounded-full bg-gradient-to-br from-physiology/10 to-clinical/10 blur-3xl"></div>
+    <div class="hero-blob-2 absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-gradient-to-br from-biochem/10 to-pharma/10 blur-3xl"></div>
+    
+    <div class="relative max-w-6xl mx-auto px-6 py-12 lg:py-16">
+      <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+        <div>
+          <!-- Tag -->
+          <div class="header-title inline-flex items-center gap-2 px-4 py-1.5 bg-physiology/10 text-physiology-dark rounded-full text-xs font-semibold tracking-wide uppercase mb-5">
+            <iconify-icon icon="lucide:graduation-cap" class="text-sm"></iconify-icon>
+            2nd Year Medical Students
+          </div>
+          
+          <!-- Title -->
+          <h1 class="header-title font-archivo text-5xl lg:text-6xl font-black text-gray-900 tracking-tight leading-none mb-3">
+            Endocrine Module
+            <span class="block text-transparent bg-clip-text bg-gradient-to-r from-physiology via-clinical to-anatomy">Interactive Quiz</span>
+          </h1>
+          
+          <!-- Subtitle -->
+          <p class="header-sub text-gray-500 text-lg font-medium max-w-lg leading-relaxed">
+            Master the endocrine system through structured, chapter-based assessments.</p>
+        </div>
+        
+        <!-- Stats -->
+        <div class="header-stats flex items-center gap-6 lg:gap-8">
+          <div class="text-center">
+            <div class="font-archivo text-3xl font-black text-gray-900">5</div>
+            <div class="text-xs text-gray-400 font-semibold uppercase tracking-wide">Chapters</div>
+          </div>
+          <div class="w-px h-10 bg-gray-200"></div>
+          <div class="text-center">
+            <div class="font-archivo text-3xl font-black text-gray-900">49</div>
+            <div class="text-xs text-gray-400 font-semibold uppercase tracking-wide">Lectures</div>
+          </div>
+          <div class="w-px h-10 bg-gray-200"></div>
+          <div class="text-center">
+            <div class="font-archivo text-3xl font-black text-gray-900">7</div>
+            <div class="text-xs text-gray-400 font-semibold uppercase tracking-wide">Subjects</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAPTER GRID -->
+  <div class="max-w-6xl mx-auto px-6 py-10 lg:py-14">
+    <!-- Section label -->
+    <div class="flex items-center gap-3 mb-8">
+      <div class="w-1.5 h-6 rounded-full bg-gradient-to-b from-physiology to-clinical"></div>
+      <h2 class="font-archivo text-xl font-bold text-gray-900 tracking-tight">Select a Chapter</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- CHAPTER 1: PITUITARY GLAND -->
+      <div class="card-animate chapter-card bg-white rounded-[30px] p-7 shadow-sm border border-gray-100 cursor-pointer group relative overflow-hidden">
+        <!-- Decorative corner -->
+        <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-physiology/5 to-transparent rounded-bl-[60px]"></div>
+        
+        <div class="relative">
+          <!-- Chapter number + emoji -->
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-physiology/15 to-clinical/10 flex items-center justify-center text-xl">🧠</div>
+            <div>
+              <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Chapter 1</div>
+              <div class="text-[11px] text-gray-300 font-medium">Page 1</div>
+            </div>
+          </div>
+          
+          <!-- Title -->
+          <h3 class="font-archivo text-xl font-bold text-gray-900 tracking-tight mb-1 group-hover:text-physiology transition-colors duration-300">Pituitary Gland</h3>
+          <p class="text-xs text-gray-400 mb-5">Hypophysis cerebri • Lectures 1–13</p>
+
+          <!-- Subject badges -->
+          <div class="flex flex-wrap gap-1.5 mb-5">
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-physiology/10 text-physiology uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-physiology"></span>Physiology
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-biochem/10 text-biochem uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-biochem"></span>Biochem
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-anatomy/10 text-anatomy uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-anatomy"></span>Anatomy
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-histology/10 text-histology uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-histology"></span>Histology
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-pathology/10 text-pathology uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-pathology"></span>Pathology
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-pharma/10 text-pharma uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-pharma"></span>Pharma
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-clinical/10 text-clinical uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-clinical"></span>Clinical
+            </span>
+          </div>
+
+          <!-- Divider -->
+          <div class="h-px bg-gray-100 mb-4"></div>
+
+          <!-- Footer -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+              <iconify-icon icon="lucide:layers" class="text-sm"></iconify-icon>
+              7 subjects
+            </div>
+            <button id="ch1-start-btn" class="btn-start inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-full text-xs font-bold tracking-wide">
+              Start
+              <iconify-icon icon="lucide:arrow-right" class="text-sm"></iconify-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAPTER 2: THYROID & PARATHYROID -->
+      <div class="card-animate chapter-card bg-white rounded-[30px] p-7 shadow-sm border border-gray-100 cursor-pointer group relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-anatomy/5 to-transparent rounded-bl-[60px]"></div>
+        
+        <div class="relative">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-anatomy/15 to-pathology/10 flex items-center justify-center text-xl">🦋</div>
+            <div>
+              <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Chapter 2</div>
+              <div class="text-[11px] text-gray-300 font-medium">Page 70</div>
+            </div>
+          </div>
+          
+          <h3 class="font-archivo text-xl font-bold text-gray-900 tracking-tight mb-1 group-hover:text-anatomy transition-colors duration-300">Thyroid &amp; Parathyroid</h3>
+          <p class="text-xs text-gray-400 mb-5">Glands • Lectures 14–24</p>
+
+          <div class="flex flex-wrap gap-1.5 mb-5">
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-anatomy/10 text-anatomy uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-anatomy"></span>Anatomy
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-histology/10 text-histology uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-histology"></span>Histology
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-physiology/10 text-physiology uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-physiology"></span>Physiology
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-pathology/10 text-pathology uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-pathology"></span>Pathology
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-pharma/10 text-pharma uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-pharma"></span>Pharma
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-clinical/10 text-clinical uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-clinical"></span>Clinical
+            </span>
+          </div>
+
+          <div class="h-px bg-gray-100 mb-4"></div>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+              <iconify-icon icon="lucide:layers" class="text-sm"></iconify-icon>
+              6 subjects
+            </div>
+            <button id="ch2-start-btn" class="btn-start inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-full text-xs font-bold tracking-wide">
+              Start
+              <iconify-icon icon="lucide:arrow-right" class="text-sm"></iconify-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAPTER 3: SUPRARENAL GLAND -->
+      <div class="card-animate chapter-card bg-white rounded-[30px] p-7 shadow-sm border border-gray-100 cursor-pointer group relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-pharma/5 to-transparent rounded-bl-[60px]"></div>
+        
+        <div class="relative">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-pharma/15 to-pathology/10 flex items-center justify-center text-xl">⚡</div>
+            <div>
+              <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Chapter 3</div>
+              <div class="text-[11px] text-gray-300 font-medium">Page 132</div>
+            </div>
+          </div>
+          
+          <h3 class="font-archivo text-xl font-bold text-gray-900 tracking-tight mb-1 group-hover:text-pharma transition-colors duration-300">Suprarenal Gland</h3>
+          <p class="text-xs text-gray-400 mb-5">Adrenal gland • Lectures 25–32</p>
+
+          <div class="flex flex-wrap gap-1.5 mb-5">
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-anatomy/10 text-anatomy uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-anatomy"></span>Anatomy
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-histology/10 text-histology uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-histology"></span>Histology
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-physiology/10 text-physiology uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-physiology"></span>Physiology
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-pathology/10 text-pathology uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-pathology"></span>Pathology
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-pharma/10 text-pharma uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-pharma"></span>Pharma
+            </span>
+          </div>
+
+          <div class="h-px bg-gray-100 mb-4"></div>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+              <iconify-icon icon="lucide:layers" class="text-sm"></iconify-icon>
+              5 subjects
+            </div>
+            <button id="ch3-start-btn" class="btn-start inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-full text-xs font-bold tracking-wide">
+              Start
+              <iconify-icon icon="lucide:arrow-right" class="text-sm"></iconify-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAPTER 4: ENDOCRINE PANCREAS -->
+      <div class="card-animate chapter-card bg-white rounded-[30px] p-7 shadow-sm border border-gray-100 cursor-pointer group relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-biochem/5 to-transparent rounded-bl-[60px]"></div>
+        
+        <div class="relative">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-biochem/15 to-physiology/10 flex items-center justify-center text-xl">🫁</div>
+            <div>
+              <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Chapter 4</div>
+              <div class="text-[11px] text-gray-300 font-medium">Page 168</div>
+            </div>
+          </div>
+          
+          <h3 class="font-archivo text-xl font-bold text-gray-900 tracking-tight mb-1 group-hover:text-biochem transition-colors duration-300">Endocrine Pancreas</h3>
+          <p class="text-xs text-gray-400 mb-5">Islets of Langerhans • Lectures 33–40</p>
+
+          <div class="flex flex-wrap gap-1.5 mb-5">
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-histology/10 text-histology uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-histology"></span>Histology
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-biochem/10 text-biochem uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-biochem"></span>Biochem
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-physiology/10 text-physiology uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-physiology"></span>Physiology
+            </span>
+          </div>
+
+          <div class="h-px bg-gray-100 mb-4"></div>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+              <iconify-icon icon="lucide:layers" class="text-sm"></iconify-icon>
+              3 subjects
+            </div>
+            <button id="ch4-start-btn" class="btn-start inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-full text-xs font-bold tracking-wide">
+              Start
+              <iconify-icon icon="lucide:arrow-right" class="text-sm"></iconify-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAPTER 5: DIABETES MELLITUS -->
+      <div class="card-animate chapter-card bg-white rounded-[30px] p-7 shadow-sm border border-gray-100 cursor-pointer group relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-pathology/5 to-transparent rounded-bl-[60px]"></div>
+        
+        <div class="relative">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-pathology/15 to-biochem/10 flex items-center justify-center text-xl">💉</div>
+            <div>
+              <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Chapter 5</div>
+              <div class="text-[11px] text-gray-300 font-medium">Page 212</div>
+            </div>
+          </div>
+          
+          <h3 class="font-archivo text-xl font-bold text-gray-900 tracking-tight mb-1 group-hover:text-pathology transition-colors duration-300">Diabetes Mellitus</h3>
+          <p class="text-xs text-gray-400 mb-5">DM Management • Lectures 41–49</p>
+
+          <div class="flex flex-wrap gap-1.5 mb-5">
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-biochem/10 text-biochem uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-biochem"></span>Biochem
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-pathology/10 text-pathology uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-pathology"></span>Pathology
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-pharma/10 text-pharma uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-pharma"></span>Pharma
+            </span>
+            <span class="badge-pill inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-clinical/10 text-clinical uppercase tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-clinical"></span>Clinical
+            </span>
+          </div>
+
+          <div class="h-px bg-gray-100 mb-4"></div>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+              <iconify-icon icon="lucide:layers" class="text-sm"></iconify-icon>
+              4 subjects
+            </div>
+            <button id="ch5-start-btn" class="btn-start inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-full text-xs font-bold tracking-wide">
+              Start
+              <iconify-icon icon="lucide:arrow-right" class="text-sm"></iconify-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SUBJECT LEGEND -->
+    <div class="mt-12 p-6 bg-white rounded-[24px] border border-gray-100 shadow-sm">
+      <div class="flex items-center gap-2 mb-4">
+        <iconify-icon icon="lucide:palette" class="text-gray-400"></iconify-icon>
+        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Subject Color Guide</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-anatomy"></span>
+          <span class="text-sm font-semibold text-gray-600">Anatomy</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-histology"></span>
+          <span class="text-sm font-semibold text-gray-600">Histology</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-physiology"></span>
+          <span class="text-sm font-semibold text-gray-600">Physiology</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-biochem"></span>
+          <span class="text-sm font-semibold text-gray-600">Biochemistry</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-pathology"></span>
+          <span class="text-sm font-semibold text-gray-600">Pathology</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-pharma"></span>
+          <span class="text-sm font-semibold text-gray-600">Pharmacology</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-clinical"></span>
+          <span class="text-sm font-semibold text-gray-600">Clinical</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="mt-10 pb-8 text-center">
+      <p class="text-xs text-gray-300 font-medium">2nd Year Medical Students • Endocrine System Module</p>
+    </div>
+  </div>
+
+</div>
+
+</body></html>
+```
+
+Please reference this design and implement it into our codebase; Try to understand the structure, which part of our codebase is relevant and implement

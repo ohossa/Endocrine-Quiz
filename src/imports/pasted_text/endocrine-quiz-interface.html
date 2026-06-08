@@ -1,0 +1,518 @@
+Page: Endocrine Quiz - Quiz Interface
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz - Endocrine Module</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        archivo: ['Archivo', 'sans-serif'],
+        manrope: ['Manrope', 'sans-serif'],
+      },
+      colors: {
+        anatomy: { light: '#EFF6FF', DEFAULT: '#3B82F6', dark: '#1D4ED8' },
+        histology: { light: '#F5F3FF', DEFAULT: '#8B5CF6', dark: '#6D28D9' },
+        physiology: { light: '#ECFDF5', DEFAULT: '#10B981', dark: '#059669' },
+        biochem: { light: '#FFFBEB', DEFAULT: '#F59E0B', dark: '#D97706' },
+        pathology: { light: '#FEF2F2', DEFAULT: '#EF4444', dark: '#DC2626' },
+        pharma: { light: '#FFF7ED', DEFAULT: '#F97316', dark: '#EA580C' },
+        clinical: { light: '#ECFEFF', DEFAULT: '#06B6D4', dark: '#0891B2' },
+        success: { light: '#F0FDF4', DEFAULT: '#22C55E', dark: '#15803D' },
+        danger: { light: '#FEF2F2', DEFAULT: '#EF4444', dark: '#B91C1C' },
+      },
+      borderRadius: {
+        '4xl': '30px',
+      }
+    }
+  }
+}
+</script>
+<style>
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-12px); max-height: 0; }
+    to { opacity: 1; transform: translateY(0); max-height: 500px; }
+  }
+  @keyframes popIn {
+    0% { opacity: 0; transform: scale(0.8); }
+    60% { transform: scale(1.05); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes checkmark {
+    0% { stroke-dashoffset: 24; }
+    100% { stroke-dashoffset: 0; }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.3); }
+    50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+  }
+  @keyframes progressShimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes optionReveal {
+    from { opacity: 0; transform: translateX(-16px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .question-animate {
+    animation: fadeInUp 500ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .option-animate {
+    animation: optionReveal 400ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .option-animate:nth-child(1) { animation-delay: 150ms; }
+  .option-animate:nth-child(2) { animation-delay: 220ms; }
+  .option-animate:nth-child(3) { animation-delay: 290ms; }
+  .option-animate:nth-child(4) { animation-delay: 360ms; }
+
+  .feedback-animate {
+    animation: slideDown 450ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .icon-pop {
+    animation: popIn 400ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  .option-btn {
+    transition: all 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .option-btn:hover:not(.answered) {
+    transform: translateX(4px);
+  }
+  .option-btn:active:not(.answered) {
+    transform: scale(0.985);
+  }
+  .option-btn.correct-answer {
+    animation: pulseGlow 1.5s ease-in-out 1;
+  }
+  .option-btn.wrong-answer {
+    animation: shake 400ms ease-in-out 1;
+  }
+
+  .nav-btn {
+    transition: all 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .nav-btn:hover:not(:disabled) {
+    transform: scale(0.97);
+  }
+  .nav-btn:active:not(:disabled) {
+    transform: scale(0.94);
+  }
+
+  .progress-bar-fill {
+    transition: width 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: linear-gradient(90deg, #10B981, #06B6D4, #3B82F6);
+    background-size: 300% 100%;
+    animation: progressShimmer 4s ease-in-out infinite;
+  }
+
+  .dot-pattern {
+    background-image: radial-gradient(circle, rgba(0,0,0,0.025) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+  }
+
+  .blob-float {
+    animation: float 8s ease-in-out infinite;
+  }
+
+  .radio-outer {
+    transition: all 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .radio-dot {
+    transition: all 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: scale(0);
+  }
+  .option-btn.selected .radio-dot,
+  .option-btn.correct-answer .radio-dot {
+    transform: scale(1);
+  }
+
+  .question-dots .dot {
+    transition: all 250ms ease;
+  }
+
+  .sidebar-card {
+    transition: all 300ms ease;
+  }
+
+  .letter-badge {
+    transition: all 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .option-btn:hover:not(.answered) .letter-badge {
+    transform: scale(1.1);
+  }
+</style>
+</head>
+<body>
+<div class="min-h-screen bg-gray-50/70 font-manrope">
+
+  <!-- ═══════════════════ STICKY HEADER ═══════════════════ -->
+  <header class="bg-white border-b border-gray-100 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 lg:px-10">
+      <div class="flex items-center justify-between h-16">
+        <!-- Left: Back + Breadcrumb -->
+        <div class="flex items-center gap-4">
+          <a href="#" id="back-to-subjects-link" class="nav-btn inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-800 border border-gray-100">
+            <iconify-icon icon="lucide:arrow-left" class="text-lg"></iconify-icon>
+          </a>
+          <div class="hidden md:flex items-center gap-2 text-sm">
+            <span class="text-gray-400 font-medium">Chapter 1</span>
+            <iconify-icon icon="lucide:chevron-right" class="text-gray-300 text-xs"></iconify-icon>
+            <span class="text-gray-400 font-medium">Pituitary Gland</span>
+            <iconify-icon icon="lucide:chevron-right" class="text-gray-300 text-xs"></iconify-icon>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-physiology/10 text-physiology-dark text-xs font-bold">
+              <span class="w-1.5 h-1.5 rounded-full bg-physiology"></span>
+              Physiology
+            </span>
+          </div>
+        </div>
+
+        <!-- Center: Question counter -->
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-1.5">
+            <span class="font-archivo text-xl font-black text-gray-900">4</span>
+            <span class="text-sm text-gray-300 font-medium">/</span>
+            <span class="text-sm text-gray-400 font-semibold">12</span>
+          </div>
+          <span class="text-xs text-gray-300 font-medium hidden sm:inline">questions</span>
+        </div>
+
+        <!-- Right: Timer + Exit -->
+        <div class="flex items-center gap-3">
+          <div class="hidden sm:flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-2xl border border-gray-100">
+            <iconify-icon icon="lucide:clock" class="text-gray-400 text-sm"></iconify-icon>
+            <span class="text-sm font-semibold text-gray-600 tabular-nums">03:24</span>
+          </div>
+          <a href="#" id="exit-quiz-link" class="nav-btn inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-gray-400 hover:text-gray-600 hover:bg-gray-50 border border-transparent hover:border-gray-100">
+            <iconify-icon icon="lucide:x" class="text-sm"></iconify-icon>
+            <span class="hidden sm:inline">Exit</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="h-1 -mx-6 lg:-mx-10 bg-gray-100 rounded-full overflow-hidden">
+        <div class="progress-bar-fill h-full rounded-full" style="width: 33.33%;"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════ MAIN LAYOUT ═══════════════════ -->
+  <div class="max-w-7xl mx-auto px-6 lg:px-10 py-8 lg:py-12">
+    <div class="flex gap-8 lg:gap-12">
+
+      <!-- ─── LEFT: MAIN QUIZ AREA ─── -->
+      <div class="flex-1 max-w-3xl">
+
+        <!-- Question Card -->
+        <div class="question-animate bg-white rounded-4xl p-8 lg:p-10 border border-gray-100 relative overflow-hidden" style="box-shadow: 0 4px 24px -4px rgba(0,0,0,0.06);">
+
+          <!-- Decorative blob -->
+          <div class="blob-float absolute -top-12 -right-12 w-40 h-40 rounded-full bg-gradient-to-bl from-physiology/5 to-transparent pointer-events-none"></div>
+
+          <div class="relative">
+            <!-- Question metadata -->
+            <div class="flex items-center gap-3 mb-6">
+              <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-physiology/8 text-physiology-dark text-[11px] font-bold uppercase tracking-wider">
+                <iconify-icon icon="lucide:list" class="text-xs"></iconify-icon>
+                Multiple Choice
+              </span>
+              <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gray-50 text-gray-400 text-[11px] font-bold uppercase tracking-wider border border-gray-100">
+                <iconify-icon icon="lucide:book-open" class="text-xs"></iconify-icon>
+                Lecture 8
+              </span>
+            </div>
+
+            <!-- Question number -->
+            <div class="flex items-start gap-4 mb-2">
+              <span class="flex-shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-xl bg-gray-900 text-white font-archivo font-black text-sm mt-0.5">4</span>
+              <h2 class="font-archivo text-xl lg:text-2xl font-bold text-gray-900 tracking-tight leading-relaxed">
+                Which of the following hormones is secreted by the anterior pituitary gland and acts primarily on the thyroid gland to regulate its function?
+              </h2>
+            </div>
+          </div>
+        </div>
+
+        <!-- Answer Options -->
+        <div class="mt-5 space-y-3">
+
+          <!-- Option A — Unselected -->
+          <div class="option-animate option-btn answered correct-answer bg-white rounded-3xl px-6 py-5 border-2 border-success/30 cursor-pointer group relative overflow-hidden" style="box-shadow: 0 2px 16px -2px rgba(34,197,94,0.12);">
+            <div class="absolute inset-0 bg-success/[0.03]"></div>
+            <div class="relative flex items-center gap-4">
+              <!-- Letter badge -->
+              <div class="letter-badge flex-shrink-0 w-11 h-11 rounded-2xl bg-success/10 border-2 border-success/30 flex items-center justify-center">
+                <iconify-icon icon="lucide:check" class="icon-pop text-success text-xl"></iconify-icon>
+              </div>
+              <!-- Radio button -->
+              <div class="radio-outer flex-shrink-0 w-5 h-5 rounded-full border-2 border-success bg-success flex items-center justify-center">
+                <div class="radio-dot w-2 h-2 rounded-full bg-white" style="transform:scale(1)"></div>
+              </div>
+              <!-- Text -->
+              <span class="text-base font-semibold text-success-dark leading-snug">Thyroid-Stimulating Hormone (TSH)</span>
+              <!-- Correct label -->
+              <span class="ml-auto inline-flex items-center gap-1 px-3 py-1 rounded-full bg-success/10 text-success text-[10px] font-bold uppercase tracking-wider flex-shrink-0">
+                <iconify-icon icon="lucide:check-circle" class="text-xs"></iconify-icon>
+                Correct
+              </span>
+            </div>
+          </div>
+
+          <!-- Option B — Wrong selected -->
+          <div class="option-animate option-btn answered wrong-answer bg-white rounded-3xl px-6 py-5 border-2 border-danger/30 cursor-pointer group relative overflow-hidden" style="box-shadow: 0 2px 16px -2px rgba(239,68,68,0.08);">
+            <div class="absolute inset-0 bg-danger/[0.02]"></div>
+            <div class="relative flex items-center gap-4">
+              <div class="letter-badge flex-shrink-0 w-11 h-11 rounded-2xl bg-danger/10 border-2 border-danger/25 flex items-center justify-center">
+                <iconify-icon icon="lucide:x" class="icon-pop text-danger text-xl"></iconify-icon>
+              </div>
+              <div class="radio-outer flex-shrink-0 w-5 h-5 rounded-full border-2 border-danger bg-danger flex items-center justify-center">
+                <div class="radio-dot w-2 h-2 rounded-full bg-white" style="transform:scale(1)"></div>
+              </div>
+              <span class="text-base font-semibold text-danger-dark leading-snug line-through decoration-danger/30 decoration-2">Adrenocorticotropic Hormone (ACTH)</span>
+              <span class="ml-auto inline-flex items-center gap-1 px-3 py-1 rounded-full bg-danger/10 text-danger text-[10px] font-bold uppercase tracking-wider flex-shrink-0">
+                <iconify-icon icon="lucide:x-circle" class="text-xs"></iconify-icon>
+                Your Pick
+              </span>
+            </div>
+          </div>
+
+          <!-- Option C — Disabled -->
+          <div class="option-animate option-btn answered bg-white rounded-3xl px-6 py-5 border-2 border-gray-100 cursor-not-allowed opacity-50">
+            <div class="flex items-center gap-4">
+              <div class="letter-badge flex-shrink-0 w-11 h-11 rounded-2xl bg-gray-50 border-2 border-gray-100 flex items-center justify-center font-archivo font-bold text-sm text-gray-400">C</div>
+              <div class="radio-outer flex-shrink-0 w-5 h-5 rounded-full border-2 border-gray-200 flex items-center justify-center">
+                <div class="radio-dot w-2 h-2 rounded-full bg-gray-400"></div>
+              </div>
+              <span class="text-base font-medium text-gray-400 leading-snug">Growth Hormone (GH)</span>
+            </div>
+          </div>
+
+          <!-- Option D — Disabled -->
+          <div class="option-animate option-btn answered bg-white rounded-3xl px-6 py-5 border-2 border-gray-100 cursor-not-allowed opacity-50">
+            <div class="flex items-center gap-4">
+              <div class="letter-badge flex-shrink-0 w-11 h-11 rounded-2xl bg-gray-50 border-2 border-gray-100 flex items-center justify-center font-archivo font-bold text-sm text-gray-400">D</div>
+              <div class="radio-outer flex-shrink-0 w-5 h-5 rounded-full border-2 border-gray-200 flex items-center justify-center">
+                <div class="radio-dot w-2 h-2 rounded-full bg-gray-400"></div>
+              </div>
+              <span class="text-base font-medium text-gray-400 leading-snug">Follicle-Stimulating Hormone (FSH)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── FEEDBACK SECTION ─── -->
+        <div class="feedback-animate mt-6 space-y-4">
+          <!-- Incorrect Banner -->
+          <div class="rounded-3xl bg-danger/[0.04] border border-danger/15 px-7 py-5 flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-2xl bg-danger/10 flex items-center justify-center mt-0.5">
+              <iconify-icon icon="lucide:alert-circle" class="text-danger text-xl"></iconify-icon>
+            </div>
+            <div>
+              <h4 class="font-archivo text-sm font-bold text-danger-dark mb-1">Incorrect Answer</h4>
+              <p class="text-sm text-danger-dark/70 leading-relaxed">You selected <strong>ACTH</strong> — ACTH acts on the adrenal cortex, not the thyroid gland.</p>
+            </div>
+          </div>
+
+          <!-- Correct answer highlight -->
+          <div class="rounded-3xl bg-success/[0.04] border border-success/15 px-7 py-5 flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-2xl bg-success/10 flex items-center justify-center mt-0.5">
+              <iconify-icon icon="lucide:lightbulb" class="text-success text-xl"></iconify-icon>
+            </div>
+            <div>
+              <h4 class="font-archivo text-sm font-bold text-success-dark mb-1">Correct Answer: TSH</h4>
+              <p class="text-sm text-gray-600 leading-relaxed">Thyroid-Stimulating Hormone (TSH), also known as thyrotropin, is synthesized and secreted by the <strong>thyrotrope cells</strong> of the anterior pituitary. It binds to TSH receptors on thyroid follicular cells, stimulating the synthesis and secretion of <strong>T3 (triiodothyronine)</strong> and <strong>T4 (thyroxine)</strong>. TSH release is regulated by <strong>TRH</strong> from the hypothalamus and inhibited by circulating T3/T4 via negative feedback.</p>
+            </div>
+          </div>
+
+          <!-- Explanation Box -->
+          <div class="rounded-3xl bg-biochem/[0.04] border border-biochem/15 px-7 py-5 flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-2xl bg-biochem/10 flex items-center justify-center mt-0.5">
+              <iconify-icon icon="lucide:bookmark" class="text-biochem text-xl"></iconify-icon>
+            </div>
+            <div>
+              <h4 class="font-archivo text-sm font-bold text-biochem-dark mb-1">Key Concept</h4>
+              <p class="text-sm text-gray-600 leading-relaxed">Remember the <strong>Hypothalamic-Pituitary-Thyroid (HPT) axis</strong>: Hypothalamus → TRH → Anterior Pituitary → TSH → Thyroid → T3/T4. This is a classic example of negative feedback regulation in the endocrine system. High-yield for exams!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── NAVIGATION BUTTONS ─── -->
+        <div class="mt-8 flex items-center justify-between gap-4">
+          <a href="#" id="prev-question-link" class="nav-btn inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-white border-2 border-gray-150 text-gray-600 hover:text-gray-900 hover:border-gray-300 text-sm font-bold" style="box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <iconify-icon icon="lucide:arrow-left" class="text-base"></iconify-icon>
+            Previous
+          </a>
+
+          <div class="flex items-center gap-2">
+            <!-- Question dots -->
+            <div class="hidden lg:flex items-center gap-1.5 px-4 py-2 bg-white rounded-2xl border border-gray-100" style="box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+              <span class="question-dots dot w-2.5 h-2.5 rounded-full bg-success"></span>
+              <span class="question-dots dot w-2.5 h-2.5 rounded-full bg-success"></span>
+              <span class="question-dots dot w-2.5 h-2.5 rounded-full bg-danger"></span>
+              <span class="question-dots dot w-3.5 h-3.5 rounded-full bg-gray-900 ring-4 ring-gray-900/10"></span>
+              <span class="question-dots dot w-2.5 h-2.5 rounded-full bg-gray-200"></span>
+              <span class="question-dots dot w-2.5 h-2.5 rounded-full bg-gray-200"></span>
+              <span class="question-dots dot w-2.5 h-2.5 rounded-full bg-gray-200"></span>
+              <span class="question-dots dot w-2.5 h-2.5 rounded-full bg-gray-200"></span>
+              <span class="question-dots dot w-2.5 h-2.5 rounded-full bg-gray-200"></span>
+              <span class="question-dots dot w-2.5 h-2.5 rounded-full bg-gray-200"></span>
+              <span class="question-dots dot w-2.5 h-2.5 rounded-full bg-gray-200"></span>
+              <span class="question-dots dot w-2.5 h-2.5 rounded-full bg-gray-200"></span>
+            </div>
+          </div>
+
+          <a href="#" id="next-question-link" class="nav-btn inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold" style="box-shadow: 0 4px 16px rgba(0,0,0,0.15);">
+            Next Question
+            <iconify-icon icon="lucide:arrow-right" class="text-base"></iconify-icon>
+          </a>
+        </div>
+      </div>
+
+      <!-- ─── RIGHT SIDEBAR ─── -->
+      <div class="hidden xl:block w-72 flex-shrink-0">
+        <div class="sticky top-24 space-y-5">
+
+          <!-- Score tracker -->
+          <div class="sidebar-card bg-white rounded-3xl p-6 border border-gray-100" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
+            <div class="flex items-center gap-2 mb-4">
+              <iconify-icon icon="lucide:target" class="text-gray-400"></iconify-icon>
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Live Score</span>
+            </div>
+
+            <!-- Score display -->
+            <div class="flex items-center gap-4 mb-5">
+              <div class="relative w-16 h-16">
+                <svg class="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                  <circle cx="32" cy="32" r="28" fill="none" stroke="#F3F4F6" stroke-width="4"/>
+                  <circle cx="32" cy="32" r="28" fill="none" stroke="#22C55E" stroke-width="4" stroke-linecap="round" stroke-dasharray="175.93" stroke-dashoffset="58.64" style="transition: stroke-dashoffset 600ms ease;"/>
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <span class="font-archivo text-lg font-black text-gray-900">67%</span>
+                </div>
+              </div>
+              <div>
+                <div class="text-2xl font-archivo font-black text-gray-900">2<span class="text-gray-300">/</span>3</div>
+                <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Correct</div>
+              </div>
+            </div>
+
+            <!-- Breakdown -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-success"></span>
+                  <span class="font-semibold text-gray-600">Correct</span>
+                </div>
+                <span class="font-bold text-success">2</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-danger"></span>
+                  <span class="font-semibold text-gray-600">Incorrect</span>
+                </div>
+                <span class="font-bold text-danger">1</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+                  <span class="font-semibold text-gray-600">Remaining</span>
+                </div>
+                <span class="font-bold text-gray-400">9</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Question Map -->
+          <div class="sidebar-card bg-white rounded-3xl p-6 border border-gray-100" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
+            <div class="flex items-center gap-2 mb-4">
+              <iconify-icon icon="lucide:grid-3x3" class="text-gray-400"></iconify-icon>
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Question Map</span>
+            </div>
+
+            <div class="grid grid-cols-4 gap-2">
+              <div class="w-full aspect-square rounded-xl bg-success/10 border-2 border-success/30 flex items-center justify-center text-xs font-bold text-success">1</div>
+              <div class="w-full aspect-square rounded-xl bg-success/10 border-2 border-success/30 flex items-center justify-center text-xs font-bold text-success">2</div>
+              <div class="w-full aspect-square rounded-xl bg-danger/10 border-2 border-danger/30 flex items-center justify-center text-xs font-bold text-danger">3</div>
+              <div class="w-full aspect-square rounded-xl bg-gray-900 border-2 border-gray-900 flex items-center justify-center text-xs font-bold text-white ring-4 ring-gray-900/10">4</div>
+              <div class="w-full aspect-square rounded-xl bg-gray-50 border-2 border-gray-100 flex items-center justify-center text-xs font-semibold text-gray-300">5</div>
+              <div class="w-full aspect-square rounded-xl bg-gray-50 border-2 border-gray-100 flex items-center justify-center text-xs font-semibold text-gray-300">6</div>
+              <div class="w-full aspect-square rounded-xl bg-gray-50 border-2 border-gray-100 flex items-center justify-center text-xs font-semibold text-gray-300">7</div>
+              <div class="w-full aspect-square rounded-xl bg-gray-50 border-2 border-gray-100 flex items-center justify-center text-xs font-semibold text-gray-300">8</div>
+              <div class="w-full aspect-square rounded-xl bg-gray-50 border-2 border-gray-100 flex items-center justify-center text-xs font-semibold text-gray-300">9</div>
+              <div class="w-full aspect-square rounded-xl bg-gray-50 border-2 border-gray-100 flex items-center justify-center text-xs font-semibold text-gray-300">10</div>
+              <div class="w-full aspect-square rounded-xl bg-gray-50 border-2 border-gray-100 flex items-center justify-center text-xs font-semibold text-gray-300">11</div>
+              <div class="w-full aspect-square rounded-xl bg-gray-50 border-2 border-gray-100 flex items-center justify-center text-xs font-semibold text-gray-300">12</div>
+            </div>
+
+            <!-- Legend -->
+            <div class="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-x-4 gap-y-1.5">
+              <div class="flex items-center gap-1.5 text-[10px] text-gray-400 font-medium">
+                <span class="w-2 h-2 rounded bg-success"></span> Correct
+              </div>
+              <div class="flex items-center gap-1.5 text-[10px] text-gray-400 font-medium">
+                <span class="w-2 h-2 rounded bg-danger"></span> Wrong
+              </div>
+              <div class="flex items-center gap-1.5 text-[10px] text-gray-400 font-medium">
+                <span class="w-2 h-2 rounded bg-gray-900"></span> Current
+              </div>
+            </div>
+          </div>
+
+          <!-- Subject info -->
+          <div class="sidebar-card bg-gradient-to-br from-physiology/5 to-clinical/5 rounded-3xl p-5 border border-physiology/10">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-physiology/15 flex items-center justify-center">
+                <iconify-icon icon="lucide:activity" class="text-physiology text-lg"></iconify-icon>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-physiology-dark">PHYSIOLOGY</div>
+                <div class="text-[10px] text-gray-400 font-medium">Lectures 1, 6, 8–10</div>
+              </div>
+            </div>
+            <div class="text-[11px] text-gray-500 leading-relaxed">
+              Covers hypothalamic regulation, anterior & posterior pituitary hormones, and their physiological effects.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════ FOOTER ═══════════════════ -->
+  <div class="max-w-7xl mx-auto px-6 lg:px-10 pb-8">
+    <div class="text-center">
+      <p class="text-[11px] text-gray-300 font-medium">Endocrine Module Quiz • Chapter 1: Pituitary Gland • Physiology</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
+```
+
+Please reference this design and implement it into our codebase; Try to understand the structure, which part of our codebase is relevant and implement

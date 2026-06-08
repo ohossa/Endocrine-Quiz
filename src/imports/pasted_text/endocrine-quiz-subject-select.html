@@ -1,0 +1,507 @@
+Page: Endocrine Quiz - Subject Select
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subject Select - Endocrine Quiz</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        archivo: ['Archivo', 'sans-serif'],
+        manrope: ['Manrope', 'sans-serif'],
+      },
+      colors: {
+        anatomy: { light: '#EFF6FF', DEFAULT: '#3B82F6', dark: '#1D4ED8' },
+        histology: { light: '#F5F3FF', DEFAULT: '#8B5CF6', dark: '#6D28D9' },
+        physiology: { light: '#ECFDF5', DEFAULT: '#10B981', dark: '#059669' },
+        biochem: { light: '#FFFBEB', DEFAULT: '#F59E0B', dark: '#D97706' },
+        pathology: { light: '#FEF2F2', DEFAULT: '#EF4444', dark: '#DC2626' },
+        pharma: { light: '#FFF7ED', DEFAULT: '#F97316', dark: '#EA580C' },
+        clinical: { light: '#ECFEFF', DEFAULT: '#06B6D4', dark: '#0891B2' },
+      },
+      borderRadius: {
+        '4xl': '30px',
+      }
+    }
+  }
+}
+</script>
+<style>
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(0.9); opacity: 0.6; }
+    50% { transform: scale(1.1); opacity: 0.2; }
+    100% { transform: scale(0.9); opacity: 0.6; }
+  }
+
+  .card-stagger {
+    animation: fadeInUp 600ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .card-stagger:nth-child(1) { animation-delay: 100ms; }
+  .card-stagger:nth-child(2) { animation-delay: 160ms; }
+  .card-stagger:nth-child(3) { animation-delay: 220ms; }
+  .card-stagger:nth-child(4) { animation-delay: 280ms; }
+  .card-stagger:nth-child(5) { animation-delay: 340ms; }
+  .card-stagger:nth-child(6) { animation-delay: 400ms; }
+  .card-stagger:nth-child(7) { animation-delay: 460ms; }
+
+  .subject-card {
+    transition: all 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .subject-card:hover {
+    transform: translateY(-6px) scale(1.02);
+  }
+  .subject-card:active {
+    transform: translateY(-2px) scale(0.98);
+  }
+
+  .icon-float {
+    transition: transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .subject-card:hover .icon-float {
+    transform: scale(1.15) rotate(-5deg);
+  }
+
+  .btn-back-anim {
+    transition: all 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .btn-back-anim:hover {
+    transform: translateX(-3px);
+  }
+
+  .header-anim {
+    animation: slideInLeft 500ms ease-out both;
+  }
+  .header-anim-delay {
+    animation: slideInLeft 500ms ease-out 100ms both;
+  }
+  .stats-anim {
+    animation: fadeIn 600ms ease-out 300ms both;
+  }
+
+  .dot-pattern {
+    background-image: radial-gradient(circle, rgba(0,0,0,0.03) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+  }
+
+  .glow-ring {
+    animation: pulse-ring 3s ease-in-out infinite;
+  }
+
+  .blob-1 {
+    animation: float 7s ease-in-out infinite;
+  }
+  .blob-2 {
+    animation: float 9s ease-in-out infinite reverse;
+  }
+
+  .arrow-bounce {
+    transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .subject-card:hover .arrow-bounce {
+    transform: translateX(4px);
+  }
+
+  .progress-line {
+    background: linear-gradient(90deg, #10B981 0%, #06B6D4 50%, #3B82F6 100%);
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+</style>
+</head>
+<body>
+<div class="min-h-screen bg-gray-50/80 font-manrope">
+
+  <!-- STICKY HEADER -->
+  <header class="bg-white border-b border-gray-100 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+      <!-- Top bar -->
+      <div class="flex items-center justify-between py-4">
+        <div class="flex items-center gap-4">
+          <!-- Back button -->
+          <a href="#" id="back-to-chapters-link" class="btn-back-anim inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-900 text-sm font-semibold border border-gray-100">
+            <iconify-icon icon="lucide:arrow-left" class="text-base"></iconify-icon>
+            <span class="hidden sm:inline">Chapters</span>
+          </a>
+
+          <!-- Breadcrumb -->
+          <div class="header-anim hidden md:flex items-center gap-2 text-sm">
+            <span class="text-gray-400 font-medium">Endocrine Module</span>
+            <iconify-icon icon="lucide:chevron-right" class="text-gray-300 text-xs"></iconify-icon>
+            <span class="text-gray-900 font-bold">Chapter 1</span>
+          </div>
+        </div>
+
+        <!-- Chapter info pill -->
+        <div class="stats-anim flex items-center gap-3">
+          <div class="flex items-center gap-2 px-4 py-2 bg-physiology/5 border border-physiology/15 rounded-full">
+            <span class="w-2 h-2 rounded-full bg-physiology"></span>
+            <span class="text-xs font-bold text-physiology-dark">7 Subjects Available</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress indicator -->
+      <div class="h-0.5 -mx-6 lg:-mx-8">
+        <div class="progress-line h-full w-full opacity-40 rounded-full"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <div class="relative overflow-hidden bg-white border-b border-gray-100">
+    <!-- Decorative elements -->
+    <div class="absolute inset-0 dot-pattern"></div>
+    <div class="blob-1 absolute -top-16 right-20 w-56 h-56 rounded-full bg-gradient-to-br from-physiology/8 to-clinical/6 blur-3xl"></div>
+    <div class="blob-2 absolute -bottom-20 left-10 w-48 h-48 rounded-full bg-gradient-to-br from-anatomy/8 to-histology/6 blur-3xl"></div>
+
+    <div class="relative max-w-6xl mx-auto px-6 lg:px-8 py-10 lg:py-14">
+      <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+        <div>
+          <!-- Chapter badge -->
+          <div class="header-anim inline-flex items-center gap-2.5 px-4 py-2 bg-gray-900 text-white rounded-full text-xs font-bold tracking-wide uppercase mb-5">
+            <span class="text-lg">🧠</span>
+            Chapter 1
+          </div>
+
+          <!-- Title -->
+          <h1 class="header-anim font-archivo text-4xl lg:text-5xl font-black text-gray-900 tracking-tight leading-tight mb-3">
+            Pituitary Gland
+          </h1>
+
+          <!-- Subtitle -->
+          <p class="header-anim-delay text-gray-400 text-base lg:text-lg font-medium max-w-md leading-relaxed">
+            Hypophysis cerebri — Select a subject to begin your assessment. Covers Lectures 1–13.
+          </p>
+        </div>
+
+        <!-- Quick stats row -->
+        <div class="stats-anim flex items-center gap-5 lg:gap-8 bg-gray-50/80 px-6 py-4 rounded-2xl border border-gray-100">
+          <div class="text-center">
+            <div class="font-archivo text-2xl font-black text-gray-900">13</div>
+            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">Lectures</div>
+          </div>
+          <div class="w-px h-8 bg-gray-200"></div>
+          <div class="text-center">
+            <div class="font-archivo text-2xl font-black text-gray-900">7</div>
+            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">Subjects</div>
+          </div>
+          <div class="w-px h-8 bg-gray-200"></div>
+          <div class="text-center">
+            <div class="font-archivo text-2xl font-black text-physiology">48</div>
+            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">Questions</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBJECT CARDS GRID -->
+  <div class="max-w-6xl mx-auto px-6 lg:px-8 py-10 lg:py-14">
+    <!-- Section label -->
+    <div class="flex items-center gap-3 mb-8">
+      <div class="w-1.5 h-6 rounded-full bg-gradient-to-b from-physiology to-anatomy"></div>
+      <h2 class="font-archivo text-lg font-bold text-gray-900 tracking-tight">Choose Your Subject</h2>
+      <div class="flex-1 h-px bg-gray-100 ml-2"></div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+
+      <!-- PHYSIOLOGY -->
+      <div class="card-stagger subject-card bg-white rounded-4xl p-6 border-2 border-gray-100 hover:border-physiology/40 cursor-pointer group relative overflow-hidden" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04);" onmouseenter="this.style.boxShadow='0 16px 40px -8px rgba(16,185,129,0.15)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'">
+        <!-- Corner accent -->
+        <div class="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-physiology/5 group-hover:bg-physiology/10 transition-colors duration-500"></div>
+        <div class="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-physiology/8 glow-ring"></div>
+
+        <div class="relative">
+          <!-- Icon -->
+          <div class="icon-float w-14 h-14 rounded-2xl bg-gradient-to-br from-physiology/15 to-physiology/5 flex items-center justify-center mb-4 border border-physiology/10">
+            <iconify-icon icon="lucide:activity" class="text-2xl text-physiology"></iconify-icon>
+          </div>
+
+          <!-- Name -->
+          <h3 class="font-archivo text-lg font-bold text-gray-900 group-hover:text-physiology transition-colors duration-300 tracking-tight mb-1">Physiology</h3>
+
+          <!-- Lectures -->
+          <p class="text-xs text-gray-400 font-medium mb-4">Lectures 1, 6, 8–10</p>
+
+          <!-- Question count -->
+          <div class="flex items-center gap-2 px-3 py-2 bg-physiology/5 rounded-xl mb-5 border border-physiology/10">
+            <iconify-icon icon="lucide:help-circle" class="text-physiology text-sm"></iconify-icon>
+            <span class="text-xs font-bold text-physiology-dark">12 Questions</span>
+          </div>
+
+          <!-- Divider -->
+          <div class="h-px bg-gray-100 mb-4"></div>
+
+          <!-- Action row -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1 text-[11px] text-gray-400 font-medium">
+              <iconify-icon icon="lucide:book-open" class="text-xs"></iconify-icon>
+              5 lectures
+            </div>
+            <div class="arrow-bounce flex items-center gap-1 text-xs font-bold text-physiology opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              Begin
+              <iconify-icon icon="lucide:arrow-right" class="text-sm"></iconify-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BIOCHEMISTRY -->
+      <div class="card-stagger subject-card bg-white rounded-4xl p-6 border-2 border-gray-100 hover:border-biochem/40 cursor-pointer group relative overflow-hidden" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04);" onmouseenter="this.style.boxShadow='0 16px 40px -8px rgba(245,158,11,0.15)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'">
+        <div class="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-biochem/5 group-hover:bg-biochem/10 transition-colors duration-500"></div>
+        <div class="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-biochem/8 glow-ring"></div>
+
+        <div class="relative">
+          <div class="icon-float w-14 h-14 rounded-2xl bg-gradient-to-br from-biochem/15 to-biochem/5 flex items-center justify-center mb-4 border border-biochem/10">
+            <iconify-icon icon="lucide:flask-conical" class="text-2xl text-biochem"></iconify-icon>
+          </div>
+
+          <h3 class="font-archivo text-lg font-bold text-gray-900 group-hover:text-biochem transition-colors duration-300 tracking-tight mb-1">Biochemistry</h3>
+          <p class="text-xs text-gray-400 font-medium mb-4">Lectures 2–3</p>
+
+          <div class="flex items-center gap-2 px-3 py-2 bg-biochem/5 rounded-xl mb-5 border border-biochem/10">
+            <iconify-icon icon="lucide:help-circle" class="text-biochem text-sm"></iconify-icon>
+            <span class="text-xs font-bold text-biochem-dark">8 Questions</span>
+          </div>
+
+          <div class="h-px bg-gray-100 mb-4"></div>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1 text-[11px] text-gray-400 font-medium">
+              <iconify-icon icon="lucide:book-open" class="text-xs"></iconify-icon>
+              2 lectures
+            </div>
+            <div class="arrow-bounce flex items-center gap-1 text-xs font-bold text-biochem opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              Begin
+              <iconify-icon icon="lucide:arrow-right" class="text-sm"></iconify-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANATOMY -->
+      <div class="card-stagger subject-card bg-white rounded-4xl p-6 border-2 border-gray-100 hover:border-anatomy/40 cursor-pointer group relative overflow-hidden" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04);" onmouseenter="this.style.boxShadow='0 16px 40px -8px rgba(59,130,246,0.15)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'">
+        <div class="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-anatomy/5 group-hover:bg-anatomy/10 transition-colors duration-500"></div>
+        <div class="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-anatomy/8 glow-ring"></div>
+
+        <div class="relative">
+          <div class="icon-float w-14 h-14 rounded-2xl bg-gradient-to-br from-anatomy/15 to-anatomy/5 flex items-center justify-center mb-4 border border-anatomy/10">
+            <iconify-icon icon="lucide:bone" class="text-2xl text-anatomy"></iconify-icon>
+          </div>
+
+          <h3 class="font-archivo text-lg font-bold text-gray-900 group-hover:text-anatomy transition-colors duration-300 tracking-tight mb-1">Anatomy</h3>
+          <p class="text-xs text-gray-400 font-medium mb-4">Lecture 4</p>
+
+          <div class="flex items-center gap-2 px-3 py-2 bg-anatomy/5 rounded-xl mb-5 border border-anatomy/10">
+            <iconify-icon icon="lucide:help-circle" class="text-anatomy text-sm"></iconify-icon>
+            <span class="text-xs font-bold text-anatomy-dark">6 Questions</span>
+          </div>
+
+          <div class="h-px bg-gray-100 mb-4"></div>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1 text-[11px] text-gray-400 font-medium">
+              <iconify-icon icon="lucide:book-open" class="text-xs"></iconify-icon>
+              1 lecture
+            </div>
+            <div class="arrow-bounce flex items-center gap-1 text-xs font-bold text-anatomy opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              Begin
+              <iconify-icon icon="lucide:arrow-right" class="text-sm"></iconify-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTOLOGY -->
+      <div class="card-stagger subject-card bg-white rounded-4xl p-6 border-2 border-gray-100 hover:border-histology/40 cursor-pointer group relative overflow-hidden" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04);" onmouseenter="this.style.boxShadow='0 16px 40px -8px rgba(139,92,246,0.15)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'">
+        <div class="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-histology/5 group-hover:bg-histology/10 transition-colors duration-500"></div>
+        <div class="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-histology/8 glow-ring"></div>
+
+        <div class="relative">
+          <div class="icon-float w-14 h-14 rounded-2xl bg-gradient-to-br from-histology/15 to-histology/5 flex items-center justify-center mb-4 border border-histology/10">
+            <iconify-icon icon="lucide:microscope" class="text-2xl text-histology"></iconify-icon>
+          </div>
+
+          <h3 class="font-archivo text-lg font-bold text-gray-900 group-hover:text-histology transition-colors duration-300 tracking-tight mb-1">Histology</h3>
+          <p class="text-xs text-gray-400 font-medium mb-4">Lectures 5, 7</p>
+
+          <div class="flex items-center gap-2 px-3 py-2 bg-histology/5 rounded-xl mb-5 border border-histology/10">
+            <iconify-icon icon="lucide:help-circle" class="text-histology text-sm"></iconify-icon>
+            <span class="text-xs font-bold text-histology-dark">8 Questions</span>
+          </div>
+
+          <div class="h-px bg-gray-100 mb-4"></div>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1 text-[11px] text-gray-400 font-medium">
+              <iconify-icon icon="lucide:book-open" class="text-xs"></iconify-icon>
+              2 lectures
+            </div>
+            <div class="arrow-bounce flex items-center gap-1 text-xs font-bold text-histology opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              Begin
+              <iconify-icon icon="lucide:arrow-right" class="text-sm"></iconify-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PATHOLOGY -->
+      <div class="card-stagger subject-card bg-white rounded-4xl p-6 border-2 border-gray-100 hover:border-pathology/40 cursor-pointer group relative overflow-hidden" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04);" onmouseenter="this.style.boxShadow='0 16px 40px -8px rgba(239,68,68,0.15)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'">
+        <div class="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-pathology/5 group-hover:bg-pathology/10 transition-colors duration-500"></div>
+        <div class="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-pathology/8 glow-ring"></div>
+
+        <div class="relative">
+          <div class="icon-float w-14 h-14 rounded-2xl bg-gradient-to-br from-pathology/15 to-pathology/5 flex items-center justify-center mb-4 border border-pathology/10">
+            <iconify-icon icon="lucide:shield-alert" class="text-2xl text-pathology"></iconify-icon>
+          </div>
+
+          <h3 class="font-archivo text-lg font-bold text-gray-900 group-hover:text-pathology transition-colors duration-300 tracking-tight mb-1">Pathology</h3>
+          <p class="text-xs text-gray-400 font-medium mb-4">Lecture 11</p>
+
+          <div class="flex items-center gap-2 px-3 py-2 bg-pathology/5 rounded-xl mb-5 border border-pathology/10">
+            <iconify-icon icon="lucide:help-circle" class="text-pathology text-sm"></iconify-icon>
+            <span class="text-xs font-bold text-pathology-dark">6 Questions</span>
+          </div>
+
+          <div class="h-px bg-gray-100 mb-4"></div>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1 text-[11px] text-gray-400 font-medium">
+              <iconify-icon icon="lucide:book-open" class="text-xs"></iconify-icon>
+              1 lecture
+            </div>
+            <div class="arrow-bounce flex items-center gap-1 text-xs font-bold text-pathology opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              Begin
+              <iconify-icon icon="lucide:arrow-right" class="text-sm"></iconify-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHARMACOLOGY -->
+      <div class="card-stagger subject-card bg-white rounded-4xl p-6 border-2 border-gray-100 hover:border-pharma/40 cursor-pointer group relative overflow-hidden" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04);" onmouseenter="this.style.boxShadow='0 16px 40px -8px rgba(249,115,22,0.15)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'">
+        <div class="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-pharma/5 group-hover:bg-pharma/10 transition-colors duration-500"></div>
+        <div class="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-pharma/8 glow-ring"></div>
+
+        <div class="relative">
+          <div class="icon-float w-14 h-14 rounded-2xl bg-gradient-to-br from-pharma/15 to-pharma/5 flex items-center justify-center mb-4 border border-pharma/10">
+            <iconify-icon icon="lucide:pill" class="text-2xl text-pharma"></iconify-icon>
+          </div>
+
+          <h3 class="font-archivo text-lg font-bold text-gray-900 group-hover:text-pharma transition-colors duration-300 tracking-tight mb-1">Pharmacology</h3>
+          <p class="text-xs text-gray-400 font-medium mb-4">Lecture 12</p>
+
+          <div class="flex items-center gap-2 px-3 py-2 bg-pharma/5 rounded-xl mb-5 border border-pharma/10">
+            <iconify-icon icon="lucide:help-circle" class="text-pharma text-sm"></iconify-icon>
+            <span class="text-xs font-bold text-pharma-dark">5 Questions</span>
+          </div>
+
+          <div class="h-px bg-gray-100 mb-4"></div>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1 text-[11px] text-gray-400 font-medium">
+              <iconify-icon icon="lucide:book-open" class="text-xs"></iconify-icon>
+              1 lecture
+            </div>
+            <div class="arrow-bounce flex items-center gap-1 text-xs font-bold text-pharma opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              Begin
+              <iconify-icon icon="lucide:arrow-right" class="text-sm"></iconify-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLINICAL -->
+      <div class="card-stagger subject-card bg-white rounded-4xl p-6 border-2 border-gray-100 hover:border-clinical/40 cursor-pointer group relative overflow-hidden" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04);" onmouseenter="this.style.boxShadow='0 16px 40px -8px rgba(6,182,212,0.15)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'">
+        <div class="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-clinical/5 group-hover:bg-clinical/10 transition-colors duration-500"></div>
+        <div class="absolute -top-4 -right-4 w-12 h-12 rounded-full bg-clinical/8 glow-ring"></div>
+
+        <div class="relative">
+          <div class="icon-float w-14 h-14 rounded-2xl bg-gradient-to-br from-clinical/15 to-clinical/5 flex items-center justify-center mb-4 border border-clinical/10">
+            <iconify-icon icon="lucide:stethoscope" class="text-2xl text-clinical"></iconify-icon>
+          </div>
+
+          <h3 class="font-archivo text-lg font-bold text-gray-900 group-hover:text-clinical transition-colors duration-300 tracking-tight mb-1">Clinical</h3>
+          <p class="text-xs text-gray-400 font-medium mb-4">Lecture 13</p>
+
+          <div class="flex items-center gap-2 px-3 py-2 bg-clinical/5 rounded-xl mb-5 border border-clinical/10">
+            <iconify-icon icon="lucide:help-circle" class="text-clinical text-sm"></iconify-icon>
+            <span class="text-xs font-bold text-clinical-dark">3 Questions</span>
+          </div>
+
+          <div class="h-px bg-gray-100 mb-4"></div>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1 text-[11px] text-gray-400 font-medium">
+              <iconify-icon icon="lucide:book-open" class="text-xs"></iconify-icon>
+              1 lecture
+            </div>
+            <div class="arrow-bounce flex items-center gap-1 text-xs font-bold text-clinical opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              Begin
+              <iconify-icon icon="lucide:arrow-right" class="text-sm"></iconify-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- QUICK START BANNER -->
+    <div class="mt-10 bg-white rounded-3xl border border-gray-100 p-6 flex flex-col sm:flex-row items-center justify-between gap-4" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center">
+          <iconify-icon icon="lucide:zap" class="text-white text-xl"></iconify-icon>
+        </div>
+        <div>
+          <h3 class="font-archivo text-base font-bold text-gray-900 tracking-tight">Quick Start — All Subjects</h3>
+          <p class="text-xs text-gray-400 font-medium mt-0.5">Randomized mix of all 48 questions from every subject</p>
+        </div>
+      </div>
+      <a href="#" id="quick-start-all-link" class="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-full text-sm font-bold tracking-wide transition-all duration-300 hover:scale-[0.97] active:scale-95" style="box-shadow: 0 4px 16px rgba(0,0,0,0.12);">
+        Start All
+        <iconify-icon icon="lucide:arrow-right" class="text-base"></iconify-icon>
+      </a>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="mt-10 pb-8 text-center">
+      <p class="text-xs text-gray-300 font-medium">Endocrine Module Quiz • Chapter 1: Pituitary Gland • 2nd Year Medical Students</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
+```
+
+Please reference this design and implement it into our codebase; Try to understand the structure, which part of our codebase is relevant and implement

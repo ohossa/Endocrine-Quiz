@@ -1,0 +1,625 @@
+Page: Endocrine Quiz - Results Dashboard
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Results - Endocrine Quiz</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        archivo: ['Archivo', 'sans-serif'],
+        manrope: ['Manrope', 'sans-serif'],
+      },
+      colors: {
+        anatomy: { light: '#EFF6FF', DEFAULT: '#3B82F6', dark: '#1D4ED8' },
+        histology: { light: '#F5F3FF', DEFAULT: '#8B5CF6', dark: '#6D28D9' },
+        physiology: { light: '#ECFDF5', DEFAULT: '#10B981', dark: '#059669' },
+        biochem: { light: '#FFFBEB', DEFAULT: '#F59E0B', dark: '#D97706' },
+        pathology: { light: '#FEF2F2', DEFAULT: '#EF4444', dark: '#DC2626' },
+        pharma: { light: '#FFF7ED', DEFAULT: '#F97316', dark: '#EA580C' },
+        clinical: { light: '#ECFEFF', DEFAULT: '#06B6D4', dark: '#0891B2' },
+        success: { light: '#F0FDF4', DEFAULT: '#22C55E', dark: '#15803D' },
+        danger: { light: '#FEF2F2', DEFAULT: '#EF4444', dark: '#B91C1C' },
+      },
+      borderRadius: {
+        '4xl': '30px',
+      }
+    }
+  }
+}
+</script>
+<style>
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes scaleIn {
+    0% { opacity: 0; transform: scale(0.6); }
+    60% { transform: scale(1.08); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes countUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes drawCircle {
+    from { stroke-dashoffset: 339.29; }
+    to { stroke-dashoffset: 50.89; }
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(60px) rotate(720deg); opacity: 0; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes badgePop {
+    0% { opacity: 0; transform: scale(0) rotate(-10deg); }
+    60% { transform: scale(1.15) rotate(3deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  }
+  @keyframes slideDown {
+    from { opacity: 0; max-height: 0; transform: translateY(-8px); }
+    to { opacity: 1; max-height: 800px; transform: translateY(0); }
+  }
+
+  .score-animate { animation: scaleIn 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 200ms both; }
+  .score-circle-draw { animation: drawCircle 1200ms cubic-bezier(0.4, 0, 0.2, 1) 400ms both; }
+  .score-text-animate { animation: countUp 500ms ease-out 800ms both; }
+  .badge-animate { animation: badgePop 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 1000ms both; }
+  .stats-animate { animation: fadeInUp 500ms ease-out 600ms both; }
+  .header-animate { animation: slideInLeft 500ms ease-out both; }
+  .section-animate { animation: fadeInUp 500ms ease-out 400ms both; }
+
+  .card-stagger { animation: fadeInUp 500ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+  .card-stagger:nth-child(1) { animation-delay: 500ms; }
+  .card-stagger:nth-child(2) { animation-delay: 600ms; }
+  .card-stagger:nth-child(3) { animation-delay: 700ms; }
+  .card-stagger:nth-child(4) { animation-delay: 800ms; }
+  .card-stagger:nth-child(5) { animation-delay: 900ms; }
+
+  .review-card {
+    transition: all 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .review-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .action-btn {
+    transition: all 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .action-btn:hover {
+    transform: translateY(-2px) scale(1.01);
+  }
+  .action-btn:active {
+    transform: scale(0.97);
+  }
+
+  .toggle-btn {
+    transition: all 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .dot-pattern {
+    background-image: radial-gradient(circle, rgba(0,0,0,0.025) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+  }
+
+  .blob-1 { animation: float 7s ease-in-out infinite; }
+  .blob-2 { animation: float 9s ease-in-out infinite reverse; }
+  .blob-3 { animation: float 11s ease-in-out infinite 2s; }
+
+  .confetti-1 { animation: confettiFall 2s ease-in 1.2s both; }
+  .confetti-2 { animation: confettiFall 2.3s ease-in 1.4s both; }
+  .confetti-3 { animation: confettiFall 1.8s ease-in 1.6s both; }
+  .confetti-4 { animation: confettiFall 2.5s ease-in 1.3s both; }
+  .confetti-5 { animation: confettiFall 2.1s ease-in 1.5s both; }
+
+  .stat-bar {
+    transition: width 800ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .expand-btn {
+    transition: all 200ms ease;
+  }
+  .expand-btn:hover {
+    background: rgba(0,0,0,0.04);
+  }
+
+  .nav-back {
+    transition: all 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .nav-back:hover {
+    transform: translateX(-3px);
+  }
+</style>
+</head>
+<body>
+<div class="min-h-screen bg-gray-50/70 font-manrope">
+
+  <!-- ═══════════════════ STICKY HEADER ═══════════════════ -->
+  <header class="bg-white border-b border-gray-100 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-6 lg:px-10">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center gap-4">
+          <a href="#" id="back-to-subjects-link" class="nav-back inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-gray-900 text-sm font-semibold border border-gray-100">
+            <iconify-icon icon="lucide:arrow-left" class="text-base"></iconify-icon>
+            <span class="hidden sm:inline">Back</span>
+          </a>
+          <div class="hidden md:flex items-center gap-2 text-sm">
+            <span class="text-gray-400 font-medium">Chapter 1</span>
+            <iconify-icon icon="lucide:chevron-right" class="text-gray-300 text-xs"></iconify-icon>
+            <span class="text-gray-400 font-medium">Pituitary Gland</span>
+            <iconify-icon icon="lucide:chevron-right" class="text-gray-300 text-xs"></iconify-icon>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-physiology/10 text-physiology-dark text-xs font-bold">
+              <span class="w-1.5 h-1.5 rounded-full bg-physiology"></span>
+              Physiology
+            </span>
+          </div>
+        </div>
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-success/5 border border-success/15 rounded-full">
+          <iconify-icon icon="lucide:check-circle-2" class="text-success text-sm"></iconify-icon>
+          <span class="text-xs font-bold text-success-dark">Quiz Complete</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════ HERO SCORE SECTION ═══════════════════ -->
+  <div class="relative overflow-hidden bg-white border-b border-gray-100">
+    <div class="absolute inset-0 dot-pattern"></div>
+    <div class="blob-1 absolute -top-20 right-32 w-64 h-64 rounded-full bg-gradient-to-br from-success/8 to-physiology/6 blur-3xl"></div>
+    <div class="blob-2 absolute -bottom-16 left-16 w-48 h-48 rounded-full bg-gradient-to-br from-clinical/8 to-anatomy/6 blur-3xl"></div>
+    <div class="blob-3 absolute top-10 left-1/3 w-32 h-32 rounded-full bg-gradient-to-br from-biochem/6 to-pharma/4 blur-3xl"></div>
+
+    <!-- Confetti particles -->
+    <div class="confetti-1 absolute top-8 left-[20%] w-2 h-2 rounded-full bg-success/60"></div>
+    <div class="confetti-2 absolute top-4 left-[40%] w-1.5 h-1.5 rounded-sm bg-physiology/50 rotate-45"></div>
+    <div class="confetti-3 absolute top-6 left-[60%] w-2 h-2 rounded-full bg-biochem/50"></div>
+    <div class="confetti-4 absolute top-10 left-[75%] w-1.5 h-1.5 rounded-sm bg-anatomy/50 rotate-12"></div>
+    <div class="confetti-5 absolute top-3 left-[85%] w-2 h-2 rounded-full bg-clinical/40"></div>
+
+    <div class="relative max-w-6xl mx-auto px-6 lg:px-10 py-12 lg:py-16">
+      <div class="flex flex-col lg:flex-row items-center lg:items-start gap-10 lg:gap-16">
+
+        <!-- Score Circle -->
+        <div class="score-animate flex-shrink-0">
+          <div class="relative w-48 h-48 lg:w-56 lg:h-56">
+            <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="54" fill="none" stroke="#F3F4F6" stroke-width="6"/>
+              <circle class="score-circle-draw" cx="60" cy="60" r="54" fill="none" stroke="url(#scoreGrad)" stroke-width="6" stroke-linecap="round" stroke-dasharray="339.29" stroke-dashoffset="50.89"/>
+              <defs>
+                <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#10B981"/>
+                  <stop offset="50%" style="stop-color:#06B6D4"/>
+                  <stop offset="100%" style="stop-color:#3B82F6"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="score-text-animate font-archivo text-6xl lg:text-7xl font-black text-gray-900 tracking-tight leading-none">85</span>
+              <span class="score-text-animate text-lg text-gray-400 font-bold -mt-1">%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Score Details -->
+        <div class="flex-1 text-center lg:text-left">
+          <div class="header-animate">
+            <h1 class="font-archivo text-4xl lg:text-5xl font-black text-gray-900 tracking-tight leading-tight mb-3">
+              Great Performance!
+            </h1>
+            <p class="text-gray-400 text-lg font-medium max-w-lg leading-relaxed mb-6">
+              You answered <strong class="text-gray-700">10 out of 12</strong> questions correctly in the Physiology section.
+            </p>
+          </div>
+
+          <!-- Performance Badge -->
+          <div class="badge-animate inline-flex items-center gap-2.5 px-5 py-2.5 bg-gradient-to-r from-success/10 to-physiology/10 border border-success/20 rounded-full mb-8">
+            <iconify-icon icon="lucide:award" class="text-success text-lg"></iconify-icon>
+            <span class="font-archivo text-sm font-bold text-success-dark uppercase tracking-wide">Excellent Work</span>
+          </div>
+
+          <!-- Stats Row -->
+          <div class="stats-animate flex flex-wrap items-center justify-center lg:justify-start gap-3">
+            <div class="flex items-center gap-2.5 px-5 py-3 bg-success/5 border border-success/15 rounded-2xl">
+              <div class="w-8 h-8 rounded-xl bg-success/15 flex items-center justify-center">
+                <iconify-icon icon="lucide:check" class="text-success text-sm font-bold"></iconify-icon>
+              </div>
+              <div>
+                <div class="font-archivo text-xl font-black text-success-dark">10</div>
+                <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Correct</div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2.5 px-5 py-3 bg-danger/5 border border-danger/15 rounded-2xl">
+              <div class="w-8 h-8 rounded-xl bg-danger/15 flex items-center justify-center">
+                <iconify-icon icon="lucide:x" class="text-danger text-sm font-bold"></iconify-icon>
+              </div>
+              <div>
+                <div class="font-archivo text-xl font-black text-danger-dark">2</div>
+                <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Incorrect</div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2.5 px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl">
+              <div class="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center">
+                <iconify-icon icon="lucide:clock" class="text-gray-500 text-sm"></iconify-icon>
+              </div>
+              <div>
+                <div class="font-archivo text-xl font-black text-gray-700">4:32</div>
+                <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Time</div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2.5 px-5 py-3 bg-physiology/5 border border-physiology/15 rounded-2xl">
+              <div class="w-8 h-8 rounded-xl bg-physiology/15 flex items-center justify-center">
+                <iconify-icon icon="lucide:activity" class="text-physiology text-sm"></iconify-icon>
+              </div>
+              <div>
+                <div class="font-archivo text-xl font-black text-physiology-dark">12</div>
+                <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Total Qs</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ REVIEW SECTION ═══════════════════ -->
+  <div class="max-w-6xl mx-auto px-6 lg:px-10 py-10 lg:py-14">
+
+    <!-- Section Header + Filter Toggle -->
+    <div class="section-animate flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+      <div class="flex items-center gap-3">
+        <div class="w-1.5 h-6 rounded-full bg-gradient-to-b from-success to-physiology"></div>
+        <h2 class="font-archivo text-xl font-bold text-gray-900 tracking-tight">Review Your Answers</h2>
+        <span class="text-xs text-gray-400 font-semibold">12 questions</span>
+      </div>
+
+      <!-- Toggle Filter -->
+      <div class="flex items-center p-1 bg-gray-100 rounded-2xl">
+        <button id="filter-all-btn" class="toggle-btn px-5 py-2.5 rounded-xl text-xs font-bold bg-white text-gray-900 shadow-sm" onclick="filterReviews('all')">
+          All Questions
+        </button>
+        <button id="filter-wrong-btn" class="toggle-btn px-5 py-2.5 rounded-xl text-xs font-bold text-gray-400" onclick="filterReviews('wrong')">
+          <span class="flex items-center gap-1.5">
+            <iconify-icon icon="lucide:x-circle" class="text-sm"></iconify-icon>
+            Wrong Only
+            <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-danger/10 text-danger text-[10px] font-black">2</span>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Review Cards -->
+    <div class="space-y-4" id="review-container">
+
+      <!-- ═══ CORRECT ANSWER CARD ═══ -->
+      <div class="card-stagger review-card review-correct bg-white rounded-4xl border border-gray-100 overflow-hidden" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04);" onmouseenter="this.style.boxShadow='0 8px 28px -4px rgba(0,0,0,0.08)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'">
+        <div class="flex items-stretch">
+          <!-- Status stripe -->
+          <div class="w-1.5 bg-success flex-shrink-0"></div>
+
+          <div class="flex-1 p-6 lg:p-7">
+            <!-- Card header -->
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-gray-900 text-white font-archivo font-bold text-xs">1</span>
+                <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Multiple Choice</span>
+                <span class="text-xs text-gray-300">•</span>
+                <span class="text-xs text-gray-400 font-medium">Lecture 8</span>
+              </div>
+              <div class="flex items-center gap-1.5 px-3 py-1.5 bg-success/8 border border-success/15 rounded-full">
+                <iconify-icon icon="lucide:check-circle-2" class="text-success text-sm"></iconify-icon>
+                <span class="text-[11px] font-bold text-success-dark">Correct</span>
+              </div>
+            </div>
+
+            <!-- Question text -->
+            <h3 class="font-archivo text-base font-bold text-gray-900 tracking-tight leading-relaxed mb-5">
+              Which hormone is primarily responsible for regulating growth and metabolism in the anterior pituitary gland?
+            </h3>
+
+            <!-- Answer display -->
+            <div class="flex items-center gap-3 px-4 py-3 bg-success/5 border border-success/15 rounded-2xl mb-4">
+              <div class="w-8 h-8 rounded-xl bg-success/15 flex items-center justify-center flex-shrink-0">
+                <iconify-icon icon="lucide:check" class="text-success text-sm"></iconify-icon>
+              </div>
+              <div>
+                <div class="text-[10px] text-success font-bold uppercase tracking-wider mb-0.5">Your Answer</div>
+                <span class="text-sm font-semibold text-success-dark">Growth Hormone (GH)</span>
+              </div>
+            </div>
+
+            <!-- Explanation (collapsed by default, shown here expanded) -->
+            <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-xl bg-biochem/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <iconify-icon icon="lucide:lightbulb" class="text-biochem text-sm"></iconify-icon>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Explanation</h4>
+                  <p class="text-sm text-gray-600 leading-relaxed">Growth Hormone (GH) is one of the most important hormones secreted by the anterior pituitary. It promotes protein synthesis, increases amino acid uptake, and increases lipolysis. It also promotes glucose release by the liver.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ CORRECT ANSWER CARD 2 ═══ -->
+      <div class="card-stagger review-card review-correct bg-white rounded-4xl border border-gray-100 overflow-hidden" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04);" onmouseenter="this.style.boxShadow='0 8px 28px -4px rgba(0,0,0,0.08)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'">
+        <div class="flex items-stretch">
+          <div class="w-1.5 bg-success flex-shrink-0"></div>
+          <div class="flex-1 p-6 lg:p-7">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-gray-900 text-white font-archivo font-bold text-xs">2</span>
+                <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">True / False</span>
+                <span class="text-xs text-gray-300">•</span>
+                <span class="text-xs text-gray-400 font-medium">Lecture 1</span>
+              </div>
+              <div class="flex items-center gap-1.5 px-3 py-1.5 bg-success/8 border border-success/15 rounded-full">
+                <iconify-icon icon="lucide:check-circle-2" class="text-success text-sm"></iconify-icon>
+                <span class="text-[11px] font-bold text-success-dark">Correct</span>
+              </div>
+            </div>
+            <h3 class="font-archivo text-base font-bold text-gray-900 tracking-tight leading-relaxed mb-5">
+              The hypothalamus directly secretes hormones into the systemic circulation without passing through the hypophyseal portal system.
+            </h3>
+            <div class="flex items-center gap-3 px-4 py-3 bg-success/5 border border-success/15 rounded-2xl">
+              <div class="w-8 h-8 rounded-xl bg-success/15 flex items-center justify-center flex-shrink-0">
+                <iconify-icon icon="lucide:check" class="text-success text-sm"></iconify-icon>
+              </div>
+              <div>
+                <div class="text-[10px] text-success font-bold uppercase tracking-wider mb-0.5">Your Answer</div>
+                <span class="text-sm font-semibold text-success-dark">False</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ INCORRECT ANSWER CARD ═══ -->
+      <div class="card-stagger review-card review-wrong bg-white rounded-4xl border border-danger/15 overflow-hidden" style="box-shadow: 0 2px 12px rgba(239,68,68,0.06);" onmouseenter="this.style.boxShadow='0 8px 28px -4px rgba(239,68,68,0.12)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(239,68,68,0.06)'">
+        <div class="flex items-stretch">
+          <div class="w-1.5 bg-danger flex-shrink-0"></div>
+          <div class="flex-1 p-6 lg:p-7">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-danger text-white font-archivo font-bold text-xs">3</span>
+                <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">True / False</span>
+                <span class="text-xs text-gray-300">•</span>
+                <span class="text-xs text-gray-400 font-medium">Lecture 6</span>
+              </div>
+              <div class="flex items-center gap-1.5 px-3 py-1.5 bg-danger/8 border border-danger/15 rounded-full">
+                <iconify-icon icon="lucide:x-circle" class="text-danger text-sm"></iconify-icon>
+                <span class="text-[11px] font-bold text-danger-dark">Incorrect</span>
+              </div>
+            </div>
+
+            <h3 class="font-archivo text-base font-bold text-gray-900 tracking-tight leading-relaxed mb-5">
+              True or False: The pituitary gland is the largest endocrine gland in the body.
+            </h3>
+
+            <!-- Your wrong answer -->
+            <div class="flex items-center gap-3 px-4 py-3 bg-danger/5 border border-danger/15 rounded-2xl mb-3">
+              <div class="w-8 h-8 rounded-xl bg-danger/15 flex items-center justify-center flex-shrink-0">
+                <iconify-icon icon="lucide:x" class="text-danger text-sm"></iconify-icon>
+              </div>
+              <div>
+                <div class="text-[10px] text-danger font-bold uppercase tracking-wider mb-0.5">Your Answer</div>
+                <span class="text-sm font-semibold text-danger-dark line-through decoration-danger/30">True</span>
+              </div>
+            </div>
+
+            <!-- Correct answer -->
+            <div class="flex items-center gap-3 px-4 py-3 bg-success/5 border border-success/15 rounded-2xl mb-4">
+              <div class="w-8 h-8 rounded-xl bg-success/15 flex items-center justify-center flex-shrink-0">
+                <iconify-icon icon="lucide:check" class="text-success text-sm"></iconify-icon>
+              </div>
+              <div>
+                <div class="text-[10px] text-success font-bold uppercase tracking-wider mb-0.5">Correct Answer</div>
+                <span class="text-sm font-semibold text-success-dark">False</span>
+              </div>
+            </div>
+
+            <!-- Explanation -->
+            <div class="bg-biochem/[0.04] rounded-2xl p-5 border border-biochem/15">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-xl bg-biochem/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <iconify-icon icon="lucide:lightbulb" class="text-biochem text-sm"></iconify-icon>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-biochem-dark uppercase tracking-wider mb-2">Explanation</h4>
+                  <p class="text-sm text-gray-600 leading-relaxed">This is false. The pituitary gland is one of the <strong>smallest</strong> endocrine glands, weighing approximately 0.6 grams. The thyroid gland is much larger. Despite its small size, the pituitary has profound effects on the body and is called the <strong>"master gland"</strong> due to its regulatory role.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Key Concept -->
+            <div class="bg-physiology/[0.04] rounded-2xl p-5 border border-physiology/15 mt-3">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-xl bg-physiology/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <iconify-icon icon="lucide:bookmark" class="text-physiology text-sm"></iconify-icon>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-physiology-dark uppercase tracking-wider mb-2">Key Concept</h4>
+                  <p class="text-sm text-gray-600 leading-relaxed">The pituitary gland sits in the <strong>sella turcica</strong> of the sphenoid bone. It weighs ~0.6g and measures ~12mm transverse. Despite its tiny size, it regulates thyroid, adrenals, gonads, growth, and lactation.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ INCORRECT ANSWER CARD 2 ═══ -->
+      <div class="card-stagger review-card review-wrong bg-white rounded-4xl border border-danger/15 overflow-hidden" style="box-shadow: 0 2px 12px rgba(239,68,68,0.06);" onmouseenter="this.style.boxShadow='0 8px 28px -4px rgba(239,68,68,0.12)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(239,68,68,0.06)'">
+        <div class="flex items-stretch">
+          <div class="w-1.5 bg-danger flex-shrink-0"></div>
+          <div class="flex-1 p-6 lg:p-7">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-danger text-white font-archivo font-bold text-xs">7</span>
+                <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Multiple Choice</span>
+                <span class="text-xs text-gray-300">•</span>
+                <span class="text-xs text-gray-400 font-medium">Lecture 9</span>
+              </div>
+              <div class="flex items-center gap-1.5 px-3 py-1.5 bg-danger/8 border border-danger/15 rounded-full">
+                <iconify-icon icon="lucide:x-circle" class="text-danger text-sm"></iconify-icon>
+                <span class="text-[11px] font-bold text-danger-dark">Incorrect</span>
+              </div>
+            </div>
+
+            <h3 class="font-archivo text-base font-bold text-gray-900 tracking-tight leading-relaxed mb-5">
+              Which of the following is NOT a hormone secreted by the anterior pituitary?
+            </h3>
+
+            <div class="flex items-center gap-3 px-4 py-3 bg-danger/5 border border-danger/15 rounded-2xl mb-3">
+              <div class="w-8 h-8 rounded-xl bg-danger/15 flex items-center justify-center flex-shrink-0">
+                <iconify-icon icon="lucide:x" class="text-danger text-sm"></iconify-icon>
+              </div>
+              <div>
+                <div class="text-[10px] text-danger font-bold uppercase tracking-wider mb-0.5">Your Answer</div>
+                <span class="text-sm font-semibold text-danger-dark line-through decoration-danger/30">Growth Hormone (GH)</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 px-4 py-3 bg-success/5 border border-success/15 rounded-2xl mb-4">
+              <div class="w-8 h-8 rounded-xl bg-success/15 flex items-center justify-center flex-shrink-0">
+                <iconify-icon icon="lucide:check" class="text-success text-sm"></iconify-icon>
+              </div>
+              <div>
+                <div class="text-[10px] text-success font-bold uppercase tracking-wider mb-0.5">Correct Answer</div>
+                <span class="text-sm font-semibold text-success-dark">Oxytocin</span>
+              </div>
+            </div>
+
+            <div class="bg-biochem/[0.04] rounded-2xl p-5 border border-biochem/15">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-xl bg-biochem/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <iconify-icon icon="lucide:lightbulb" class="text-biochem text-sm"></iconify-icon>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-biochem-dark uppercase tracking-wider mb-2">Explanation</h4>
+                  <p class="text-sm text-gray-600 leading-relaxed">Oxytocin is produced by the hypothalamus and stored/released by the <strong>posterior pituitary</strong>, NOT the anterior pituitary. The anterior pituitary secretes: GH, TSH, ACTH, FSH, LH, and Prolactin — remember the mnemonic <strong>"FLAT PiG"</strong>.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ CORRECT ANSWER CARD 3 (compact) ═══ -->
+      <div class="card-stagger review-card review-correct bg-white rounded-4xl border border-gray-100 overflow-hidden" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04);" onmouseenter="this.style.boxShadow='0 8px 28px -4px rgba(0,0,0,0.08)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'">
+        <div class="flex items-stretch">
+          <div class="w-1.5 bg-success flex-shrink-0"></div>
+          <div class="flex-1 p-6 lg:p-7">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-gray-900 text-white font-archivo font-bold text-xs">4</span>
+                <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Multiple Choice</span>
+                <span class="text-xs text-gray-300">•</span>
+                <span class="text-xs text-gray-400 font-medium">Lecture 8</span>
+              </div>
+              <div class="flex items-center gap-1.5 px-3 py-1.5 bg-success/8 border border-success/15 rounded-full">
+                <iconify-icon icon="lucide:check-circle-2" class="text-success text-sm"></iconify-icon>
+                <span class="text-[11px] font-bold text-success-dark">Correct</span>
+              </div>
+            </div>
+            <h3 class="font-archivo text-base font-bold text-gray-900 tracking-tight leading-relaxed mb-5">
+              TSH acts primarily on which of the following glands to regulate its function?
+            </h3>
+            <div class="flex items-center gap-3 px-4 py-3 bg-success/5 border border-success/15 rounded-2xl">
+              <div class="w-8 h-8 rounded-xl bg-success/15 flex items-center justify-center flex-shrink-0">
+                <iconify-icon icon="lucide:check" class="text-success text-sm"></iconify-icon>
+              </div>
+              <div>
+                <div class="text-[10px] text-success font-bold uppercase tracking-wider mb-0.5">Your Answer</div>
+                <span class="text-sm font-semibold text-success-dark">Thyroid Gland</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════ ACTION BUTTONS ═══════════════════ -->
+    <div class="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <button id="retake-btn" class="action-btn flex items-center justify-center gap-3 px-6 py-5 bg-gray-900 hover:bg-gray-800 text-white rounded-3xl font-bold text-sm" style="box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+        <iconify-icon icon="lucide:rotate-ccw" class="text-lg"></iconify-icon>
+        Retake Quiz
+      </button>
+
+      <button id="new-subject-btn" class="action-btn flex items-center justify-center gap-3 px-6 py-5 bg-white hover:bg-gray-50 text-gray-900 rounded-3xl font-bold text-sm border-2 border-gray-150" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
+        <iconify-icon icon="lucide:arrow-right" class="text-lg"></iconify-icon>
+        Try Another Subject
+      </button>
+
+      <button id="chapters-btn" class="action-btn flex items-center justify-center gap-3 px-6 py-5 bg-white hover:bg-gray-50 text-gray-900 rounded-3xl font-bold text-sm border-2 border-gray-150" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
+        <iconify-icon icon="lucide:layout-grid" class="text-lg"></iconify-icon>
+        Back to Chapters
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-12 pb-8 text-center">
+      <p class="text-[11px] text-gray-300 font-medium">Endocrine Module Quiz • Chapter 1: Pituitary Gland • Physiology • 2nd Year Medical Students</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function filterReviews(filter) {
+  const allBtn = document.getElementById('filter-all-btn');
+  const wrongBtn = document.getElementById('filter-wrong-btn');
+  const correctCards = document.querySelectorAll('.review-correct');
+  const wrongCards = document.querySelectorAll('.review-wrong');
+
+  if (filter === 'all') {
+    allBtn.classList.add('bg-white', 'text-gray-900', 'shadow-sm');
+    allBtn.classList.remove('text-gray-400');
+    wrongBtn.classList.remove('bg-white', 'text-gray-900', 'shadow-sm');
+    wrongBtn.classList.add('text-gray-400');
+    correctCards.forEach(card => { card.style.display = ''; });
+    wrongCards.forEach(card => { card.style.display = ''; });
+  } else {
+    wrongBtn.classList.add('bg-white', 'text-gray-900', 'shadow-sm');
+    wrongBtn.classList.remove('text-gray-400');
+    allBtn.classList.remove('bg-white', 'text-gray-900', 'shadow-sm');
+    allBtn.classList.add('text-gray-400');
+    correctCards.forEach(card => { card.style.display = 'none'; });
+    wrongCards.forEach(card => { card.style.display = ''; });
+  }
+}
+</script>
+</body>
+</html>
+```
+
+Please reference this design and implement it into our codebase; Try to understand the structure, which part of our codebase is relevant and implement
