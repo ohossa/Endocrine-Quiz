@@ -9150,7 +9150,7 @@
             {
               "id": 640,
               "type": "case",
-              "question": "A 40-year-old patient came to the clinic, her HbA lc was 8.5%\n(69 mmol/mol) and type 2 diabetes was diagnosed. She weighs 100 kg,\nshe started lifestyle modification and oral drug A. 3 months later\nABAlc was 8 (64 mmol/mol) and drug B was added.",
+              "question": "A 40-year-old patient came to the clinic, her HbA1c was 8.5%\n(69 mmol/mol) and type 2 diabetes was diagnosed. She weighs 100 kg,\nshe started lifestyle modification and oral drug A. 3 months later\nHBA1c was 8 (64 mmol/mol) and drug B was added.",
               "subQuestions": [
                 {
                   "id": "640_a",
