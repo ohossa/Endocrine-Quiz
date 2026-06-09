@@ -9,16 +9,30 @@ export type SubjectColor =
 
 export type Screen = 'chapters' | 'subjects' | 'quiz' | 'results';
 
+export interface SubQuestion {
+  id: string;
+  type: 'mcq' | 'essay';
+  text: string;
+  options?: string[];
+  correctIndex?: number;
+  modelAnswer?: string;
+  explanation: string;
+  keyConcept?: string;
+}
+
 export interface Question {
   id: number;
-  type: 'mcq' | 'truefalse';
+  type: 'mcq' | 'truefalse' | 'matching' | 'essay' | 'case';
   text: string;
   lecture: number;
   subjectColor: SubjectColor;
-  options: string[];
-  correctIndex: number;
+  options?: string[];
+  correctIndex?: number;
+  pairs?: { premise: string; target: string }[];
+  modelAnswer?: string;
   explanation: string;
   keyConcept?: string;
+  subQuestions?: SubQuestion[];
 }
 
 export interface SubjectData {

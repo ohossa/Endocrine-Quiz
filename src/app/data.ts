@@ -1,18 +1,30 @@
-import { ChapterData, Question, SubjectColor, SubjectData } from './types';
-import rawData from '../imports/endocrine-data-fixed.json';
+import { ChapterData, Question, SubjectColor, SubjectData, SubQuestion } from './types';
+import rawData from '../imports/Endocrine MCQ new.json';
 
-// ── Raw JSON types ─────────────────────────────────────────────────────────
+// ── Raw JSON types ─────────────────────────────────────────────────────────────
 
-type RawQuestionOption = {
-  text: string;
-  value: boolean;
-} | string;
+type RawSubQuestion = {
+  id: string;
+  type: 'mcq' | 'essay';
+  question: string;
+  options?: string[];
+  correctAnswer?: string;
+  modelAnswer?: string;
+  explanation?: string;
+  keyConcept?: string;
+};
 
 type RawQuestion = {
   id: number;
+  type?: 'mcq' | 'truefalse' | 'matching' | 'essay' | 'case';
   question: string;
-  options: RawQuestionOption[];
-  correctAnswer: string | boolean;
+  options?: string[];
+  correctAnswer?: string;
+  pairs?: { premise: string; target: string }[];
+  modelAnswer?: string;
+  explanation?: string;
+  keyConcept?: string;
+  subQuestions?: RawSubQuestion[];
 };
 
 type RawTopic = {
@@ -25,7 +37,7 @@ type RawChapter = {
   topics: RawTopic[];
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function letterToIndex(letter: string): number {
   return letter.toUpperCase().charCodeAt(0) - 65; // A→0, B→1, …
@@ -72,36 +84,80 @@ const SUBJECT_ORDER: SubjectColor[] = [
   'pharma',
   'clinical',
 ];
+function transformSubQuestion(sq: RawSubQuestion): SubQuestion {
+  if (sq.type === 'essay') {
+    return {
+      id: sq.id,
+      type: 'essay',
+      text: sq.question,
+      modelAnswer: sq.modelAnswer || '',
+      explanation: sq.explanation || '',
+      keyConcept: sq.keyConcept,
+    };
+  }
+
+  const options = sq.options || [];
+  const idx = sq.correctAnswer ? letterToIndex(sq.correctAnswer) : 0;
+  return {
+    id: sq.id,
+    type: 'mcq',
+    text: sq.question,
+    options,
+    correctIndex: idx >= 0 && idx < options.length ? idx : 0,
+    explanation: sq.explanation || '',
+    keyConcept: sq.keyConcept,
+  };
+}
 
 function transformQuestion(q: RawQuestion, color: SubjectColor): Question {
-  // Extract option texts - handle both old string format and new object format
-  const optionTexts = q.options.map(opt => {
-    if (typeof opt === 'string') {
-      return opt;
-    }
-    return opt.text;
-  });
+  const rawType = q.type;
 
-  // Detect if this is a true/false question
-  const opt0Lower = optionTexts[0]?.toLowerCase().trim() ?? '';
-  const opt1Lower = optionTexts[1]?.toLowerCase().trim() ?? '';
-  
-  const isTrueFalse =
-    optionTexts.length === 2 &&
-    (((opt0Lower === 'true' || opt0Lower.startsWith('true')) && (opt1Lower === 'false' || opt1Lower.startsWith('false'))) ||
-    ((opt0Lower === 'yes' || opt0Lower.startsWith('yes')) && (opt1Lower === 'no' || opt1Lower.startsWith('no'))) ||
-    ((opt0Lower === 'correct' || opt0Lower.startsWith('correct')) && (opt1Lower === 'incorrect' || opt1Lower.startsWith('incorrect'))));
-
-  // Determine correct index based on correctAnswer format
-  let correctIndex = 0;
-  if (typeof q.correctAnswer === 'boolean') {
-    // New format: boolean value
-    correctIndex = q.correctAnswer ? 0 : 1; // true → index 0, false → index 1
-  } else {
-    // Old format: letter string (A, B, C, etc.)
-    const idx = letterToIndex(q.correctAnswer);
-    correctIndex = idx >= 0 && idx < optionTexts.length ? idx : 0;
+  if (rawType === 'case') {
+    return {
+      id: q.id,
+      type: 'case',
+      text: q.question,
+      lecture: 1,
+      subjectColor: color,
+      explanation: q.explanation || '',
+      keyConcept: q.keyConcept,
+      subQuestions: (q.subQuestions || []).map(transformSubQuestion),
+    };
   }
+
+  if (rawType === 'matching') {
+    return {
+      id: q.id,
+      type: 'matching',
+      text: q.question,
+      lecture: 1,
+      subjectColor: color,
+      pairs: q.pairs || [],
+      explanation: q.explanation || '',
+      keyConcept: q.keyConcept,
+    };
+  }
+
+  if (rawType === 'essay') {
+    return {
+      id: q.id,
+      type: 'essay',
+      text: q.question,
+      lecture: 1,
+      subjectColor: color,
+      modelAnswer: q.modelAnswer || '',
+      explanation: q.explanation || '',
+      keyConcept: q.keyConcept,
+    };
+  }
+
+  const options = q.options || [];
+  const idx = q.correctAnswer ? letterToIndex(q.correctAnswer) : 0;
+  const isTrueFalse =
+    rawType === 'truefalse' ||
+    (options.length === 2 &&
+      options[0]?.toLowerCase().startsWith('true') &&
+      options[1]?.toLowerCase().startsWith('false'));
 
   return {
     id: q.id,
@@ -109,13 +165,14 @@ function transformQuestion(q: RawQuestion, color: SubjectColor): Question {
     text: q.question,
     lecture: 1,
     subjectColor: color,
-    options: optionTexts,
-    correctIndex,
-    explanation: '',
+    options,
+    correctIndex: idx >= 0 && idx < options.length ? idx : 0,
+    explanation: q.explanation || '',
+    keyConcept: q.keyConcept,
   };
 }
 
-// ── Chapter metadata ────────────────────────────────────────────────────────
+// ── Chapter metadata ───────────────────────────────────────────────────────────
 
 const CHAPTER_META = [
   {
@@ -160,7 +217,7 @@ const CHAPTER_META = [
   },
 ];
 
-// ── Builder ───────────────────────────────────────────────────────────
+// ── Builder ────────────────────────────────────────────────────────────────────
 
 function buildChapter(
   raw: RawChapter,
@@ -200,7 +257,7 @@ function buildChapter(
   };
 }
 
-// ── Exports ───────────────────────────────────────────────────────────
+// ── Exports ────────────────────────────────────────────────────────────────────
 
 export const chapters: ChapterData[] = (
   rawData.chapters as RawChapter[]

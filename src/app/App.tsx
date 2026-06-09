@@ -29,19 +29,35 @@ export default function App() {
   const [quizPayload, setQuizPayload] = useState<QuizPayload | null>(null);
   const [resultPayload, setResultPayload] = useState<ResultPayload | null>(null);
 
+  const transitionTo = (fn: () => void) => {
+    // @ts-ignore
+    if (document.startViewTransition) {
+      // @ts-ignore
+      document.startViewTransition(fn);
+    } else {
+      fn();
+    }
+  };
+
   const handleSelectChapter = (chapter: ChapterData) => {
-    setSelectedChapter(chapter);
-    setScreen('subjects');
+    transitionTo(() => {
+      setSelectedChapter(chapter);
+      setScreen('subjects');
+    });
   };
 
   const handleSelectSubject = (subject: SubjectData, questions: Question[]) => {
-    setQuizPayload({ chapter: selectedChapter!, subject, questions });
-    setScreen('quiz');
+    transitionTo(() => {
+      setQuizPayload({ chapter: selectedChapter!, subject, questions });
+      setScreen('quiz');
+    });
   };
 
   const handleQuickStart = (questions: Question[]) => {
-    setQuizPayload({ chapter: selectedChapter!, subject: null, questions });
-    setScreen('quiz');
+    transitionTo(() => {
+      setQuizPayload({ chapter: selectedChapter!, subject: null, questions });
+      setScreen('quiz');
+    });
   };
 
   const handleFinishQuiz = (answers: Record<number, number>, elapsedSeconds: number, flaggedQuestions: Set<number>) => {
@@ -57,21 +73,27 @@ export default function App() {
       pct: total > 0 ? Math.round((correct / total) * 100) : 0,
       elapsedSeconds,
     });
-    setResultPayload({ chapter: quizPayload!.chapter, subject: quizPayload!.subject, questions, answers, elapsedSeconds, flaggedQuestions });
-    setScreen('results');
+    transitionTo(() => {
+      setResultPayload({ chapter: quizPayload!.chapter, subject: quizPayload!.subject, questions, answers, elapsedSeconds, flaggedQuestions });
+      setScreen('results');
+    });
   };
 
   const handleRetake = () => {
     if (!quizPayload) return;
-    setQuizPayload({ ...quizPayload, questions: shuffleArray(quizPayload.questions) });
-    setScreen('quiz');
+    transitionTo(() => {
+      setQuizPayload({ ...quizPayload, questions: quizPayload.questions });
+      setScreen('quiz');
+    });
   };
 
   const handleBackToChapters = () => {
-    setSelectedChapter(null);
-    setQuizPayload(null);
-    setResultPayload(null);
-    setScreen('chapters');
+    transitionTo(() => {
+      setSelectedChapter(null);
+      setQuizPayload(null);
+      setResultPayload(null);
+      setScreen('chapters');
+    });
   };
 
   return (

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import {
   ArrowLeft,
   ChevronRight,
@@ -18,6 +19,62 @@ import {
 } from 'lucide-react';
 import { ChapterData, SubjectData, Question, SubjectColor, subjectStyles, formatTime } from '../types';
 import { ThemeToggle } from './ThemeToggle';
+
+const renderFormattedText = (
+  text: string | undefined,
+  fallbackClassName: string = "text-sm font-medium text-gray-700 dark:text-gray-300 leading-relaxed mb-4 whitespace-pre-wrap text-left"
+) => {
+  if (!text) return null;
+  if (text.includes('|')) {
+    const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+    const rows = lines
+      .filter((line) => !line.includes('---') && line.includes('|'))
+      .map((line) => {
+        const parts = line.split('|');
+        if (parts[0] === '') parts.shift();
+        if (parts[parts.length - 1] === '') parts.pop();
+        return parts.map((cell) => cell.trim());
+      });
+
+    if (rows.length > 0) {
+      const headers = rows[0];
+      const bodyRows = rows.slice(1);
+
+      return (
+        <div className="overflow-x-auto my-4 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 text-left">
+          <table className="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                {headers.map((h, idx) => (
+                  <th key={idx} className="p-4 text-[10px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              {bodyRows.map((row, rIdx) => (
+                <tr key={rIdx} className="hover:bg-gray-50/50 dark:hover:bg-gray-950/30 transition-colors">
+                  {row.map((cell, cIdx) => (
+                    <td key={cIdx} className="p-4 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+  }
+  return (
+    <div className={fallbackClassName}>
+      {text}
+    </div>
+  );
+};
+
 
 interface Props {
   chapter: ChapterData;
@@ -53,11 +110,84 @@ export function ResultsDashboard({
 }: Props) {
   const [filter, setFilter] = useState<'all' | 'wrong' | 'flagged'>('all');
 
-  const total = questions.length;
-  const correct = questions.filter((q, i) => answers[i] === q.correctIndex).length;
+  const checkAnswerCorrect = (q: Question, ans: any) => {
+    if (ans === undefined) return false;
+    if (q.type === 'mcq' || q.type === 'truefalse') {
+      return ans === q.correctIndex;
+    }
+    if (q.type === 'matching') {
+      const scrambled = ans.scrambled;
+      const matches = ans.matches || ans;
+      if (!scrambled || !matches || !q.pairs) return false;
+      return q.pairs.every((pair, pIdx) => {
+        const correctTargetIdx = scrambled.indexOf(pair.target);
+        return matches[pIdx] === correctTargetIdx;
+      });
+    }
+    if (q.type === 'essay') {
+      return ans?.selfGrade === 'correct';
+    }
+    if (q.type === 'case' && q.subQuestions) {
+      return q.subQuestions.every((subQ) => {
+        const subAns = ans[subQ.id];
+        if (subAns === undefined) return false;
+        if (subQ.type === 'mcq') {
+          return subAns === subQ.correctIndex;
+        }
+        if (subQ.type === 'essay') {
+          return subAns?.selfGrade === 'correct';
+        }
+        return false;
+      });
+    }
+    return false;
+  };
+
+  // Points-based calculations for case sub-questions
+  const getPointsStats = () => {
+    let totalPoints = 0;
+    let correctPoints = 0;
+
+    questions.forEach((q, i) => {
+      const ans = answers[i];
+      if (q.type === 'case' && q.subQuestions) {
+        totalPoints += q.subQuestions.length;
+        if (ans) {
+          q.subQuestions.forEach((subQ) => {
+            const subAns = ans[subQ.id];
+            if (subAns !== undefined) {
+              const isSubCorrect = subQ.type === 'mcq'
+                ? subAns === subQ.correctIndex
+                : subAns?.selfGrade === 'correct';
+              if (isSubCorrect) correctPoints++;
+            }
+          });
+        }
+      } else {
+        totalPoints += 1;
+        if (ans !== undefined && checkAnswerCorrect(q, ans)) {
+          correctPoints++;
+        }
+      }
+    });
+
+    return { totalPoints, correctPoints };
+  };
+
+  const { totalPoints: total, correctPoints: correct } = getPointsStats();
   const incorrect = total - correct;
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
   const flaggedCount = flaggedQuestions.size;
+
+  useEffect(() => {
+    if (pct >= 80) {
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 }
+      });
+    }
+  }, [pct]);
 
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
@@ -68,7 +198,7 @@ export function ResultsDashboard({
 
   const visibleQuestions =
     filter === 'wrong'
-      ? questions.map((q, i) => ({ q, i })).filter(({ i }) => answers[i] !== questions[i].correctIndex)
+      ? questions.map((q, i) => ({ q, i })).filter(({ q, i }) => !checkAnswerCorrect(q, answers[i]))
       : filter === 'flagged'
       ? questions.map((q, i) => ({ q, i })).filter(({ i }) => flaggedQuestions.has(i))
       : questions.map((q, i) => ({ q, i }));
@@ -318,7 +448,7 @@ export function ResultsDashboard({
         <div className="space-y-4">
           {visibleQuestions.map(({ q, i }, staggerIdx) => {
             const userAns = answers[i];
-            const isCorrect = userAns === q.correctIndex;
+            const isCorrect = checkAnswerCorrect(q, userAns);
             const qColor = q.subjectColor as SubjectColor;
 
             return (
@@ -348,8 +478,8 @@ export function ResultsDashboard({
                   <div className={`w-1.5 flex-shrink-0 ${isCorrect ? 'bg-success' : 'bg-danger'}`} />
                   <div className="flex-1 p-6 lg:p-7">
                     {/* Card header */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span
                           className={`inline-flex items-center justify-center w-8 h-8 rounded-xl font-archivo font-bold text-xs ${
                             isCorrect ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-danger text-white'
@@ -358,7 +488,15 @@ export function ResultsDashboard({
                           {i + 1}
                         </span>
                         <span className="text-xs text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider">
-                          {q.type === 'truefalse' ? 'True / False' : 'Multiple Choice'}
+                          {q.type === 'truefalse'
+                            ? 'True / False'
+                            : q.type === 'matching'
+                            ? 'Matching'
+                            : q.type === 'essay'
+                            ? 'Essay'
+                            : q.type === 'case'
+                            ? 'Clinical Case Study'
+                            : 'Multiple Choice'}
                         </span>
                         <span className={`hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${subjectStyles[qColor].bgOp10} ${subjectStyles[qColor].textDark}`}>
                           {chapter.subjects.find((s) => s.id === q.subjectColor)?.name ?? q.subjectColor}
@@ -371,7 +509,7 @@ export function ResultsDashboard({
                         )}
                       </div>
                       <div
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
+                        className={`flex items-center self-start sm:self-auto gap-1.5 px-3 py-1.5 rounded-full ${
                           isCorrect ? 'bg-success/8 border border-success/15' : 'bg-danger/8 border border-danger/15'
                         }`}
                       >
@@ -387,46 +525,204 @@ export function ResultsDashboard({
                     </div>
 
                     {/* Question text */}
-                    <h3 className="font-archivo text-base font-bold text-gray-900 dark:text-white tracking-tight leading-relaxed mb-5">
-                      {q.text}
-                    </h3>
-
-                    {/* Your answer */}
-                    <div
-                      className={`flex items-center gap-3 px-4 py-3 rounded-2xl mb-3 ${
-                        isCorrect ? 'bg-success/5 border border-success/15' : 'bg-danger/5 border border-danger/15'
-                      }`}
-                    >
-                      <div
-                        className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          isCorrect ? 'bg-success/15' : 'bg-danger/15'
-                        }`}
-                      >
-                        {isCorrect ? <Check size={14} className="text-success" /> : <X size={14} className="text-danger" />}
-                      </div>
-                      <div>
-                        <div className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isCorrect ? 'text-success' : 'text-danger'}`}>
-                          Your Answer
-                        </div>
-                        <span
-                          className={`text-sm font-semibold ${
-                            isCorrect ? 'text-success-dark' : 'text-danger-dark line-through decoration-danger/30'
-                          }`}
-                        >
-                          {userAns !== undefined ? q.options[userAns] : 'Not answered'}
-                        </span>
-                      </div>
+                    <div className="font-archivo text-base font-bold text-gray-900 dark:text-white tracking-tight leading-relaxed mb-5">
+                      {renderFormattedText(q.text, "font-archivo text-base font-bold text-gray-900 dark:text-white tracking-tight leading-relaxed mb-5")}
                     </div>
 
-                    {/* Correct answer (only if wrong) */}
-                    {!isCorrect && (
-                      <div className="flex items-center gap-3 px-4 py-3 bg-success/5 border border-success/15 rounded-2xl mb-4">
-                        <div className="w-8 h-8 rounded-xl bg-success/15 flex items-center justify-center flex-shrink-0">
-                          <Check size={14} className="text-success" />
+                    {/* MCQ / TrueFalse Answers review */}
+                    {(q.type === 'mcq' || q.type === 'truefalse') && q.options && (
+                      <>
+                        <div
+                          className={`flex items-center gap-3 px-4 py-3 rounded-2xl mb-3 ${
+                            isCorrect ? 'bg-success/5 border border-success/15' : 'bg-danger/5 border border-danger/15'
+                          }`}
+                        >
+                          <div
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                              isCorrect ? 'bg-success/15' : 'bg-danger/15'
+                            }`}
+                          >
+                            {isCorrect ? <Check size={14} className="text-success" /> : <X size={14} className="text-danger" />}
+                          </div>
+                          <div>
+                            <div className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isCorrect ? 'text-success' : 'text-danger'}`}>
+                              Your Answer
+                            </div>
+                            <span
+                              className={`text-sm font-semibold ${
+                                isCorrect ? 'text-success-dark' : 'text-danger-dark line-through decoration-danger/30'
+                              }`}
+                            >
+                              {userAns !== undefined ? q.options[userAns] : 'Not answered'}
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <div className="text-[10px] text-success font-bold uppercase tracking-wider mb-0.5">Correct Answer</div>
-                          <span className="text-sm font-semibold text-success-dark">{q.options[q.correctIndex]}</span>
+
+                        {!isCorrect && (
+                          <div className="flex items-center gap-3 px-4 py-3 bg-success/5 border border-success/15 rounded-2xl mb-4">
+                            <div className="w-8 h-8 rounded-xl bg-success/15 flex items-center justify-center flex-shrink-0">
+                              <Check size={14} className="text-success" />
+                            </div>
+                            <div>
+                              <div className="text-[10px] text-success font-bold uppercase tracking-wider mb-0.5">Correct Answer</div>
+                              <span className="text-sm font-semibold text-success-dark">{q.options[q.correctIndex ?? 0]}</span>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Matching Review Layout */}
+                    {q.type === 'matching' && (() => {
+                      const scrambled = userAns?.scrambled || [];
+                      const matches = userAns?.matches || userAns || {};
+                      return (
+                        <div className="space-y-3 mb-4">
+                          <div className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider mb-1">Pairing Results</div>
+                          <div className="grid grid-cols-1 gap-2.5">
+                            {q.pairs?.map((pair, pIdx) => {
+                              const studentTargetIdx = matches[pIdx];
+                              const studentTarget = studentTargetIdx !== undefined ? scrambled[studentTargetIdx] : 'None';
+                              const isPairCorrect = studentTargetIdx === scrambled.indexOf(pair.target);
+
+                              return (
+                                <div
+                                  key={pIdx}
+                                  className={`p-4 border rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                                    isPairCorrect ? 'bg-success/[0.02] border-success/15' : 'bg-danger/[0.02] border-danger/15'
+                                  }`}
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{pair.premise}</span>
+                                    <span className="text-xs text-gray-400 dark:text-gray-500 mx-2">→</span>
+                                    <span className={`text-sm font-semibold ${isPairCorrect ? 'text-success-dark' : 'text-danger-dark line-through decoration-danger/30'}`}>
+                                      {studentTarget}
+                                    </span>
+                                  </div>
+                                  {!isPairCorrect && (
+                                    <div className="text-xs font-semibold text-success-dark bg-success/5 border border-success/10 px-3 py-1.5 rounded-xl self-start sm:self-auto">
+                                      Correct: <strong className="underline">{pair.target}</strong>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Essay Review Layout */}
+                    {q.type === 'essay' && (
+                      <div className="space-y-4 mb-4">
+                        <div className="bg-gray-50 dark:bg-gray-800/40 rounded-2xl p-5 border border-gray-100 dark:border-gray-800">
+                          <div className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider mb-2">Your Draft Notes</div>
+                          {renderFormattedText(userAns?.text || 'No draft notes recorded.', "text-sm font-medium text-gray-700 dark:text-gray-300 leading-relaxed italic whitespace-pre-wrap")}
+                        </div>
+                        <div className="bg-success/[0.02] rounded-2xl p-5 border border-success/10">
+                          <div className="text-[10px] text-success font-bold uppercase tracking-wider mb-2">Reference Model Answer</div>
+                          {renderFormattedText(q.modelAnswer, "text-sm font-semibold text-success-dark leading-relaxed whitespace-pre-wrap")}
+                        </div>
+                      </div>
+                    )}
+
+                    {q.type === 'case' && q.subQuestions && (
+                      <div className="space-y-6 mb-4">
+                        <div className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider mb-2">
+                          Case Study Questions
+                        </div>
+                        <div className="space-y-4">
+                          {q.subQuestions.map((subQ, sIdx) => {
+                            const subAns = userAns?.[subQ.id];
+                            const isSubCorrect = subQ.type === 'mcq'
+                              ? subAns === subQ.correctIndex
+                              : subAns?.selfGrade === 'correct';
+
+                            return (
+                              <div
+                                key={subQ.id}
+                                className={`p-5 rounded-2xl border ${
+                                  isSubCorrect
+                                    ? 'bg-success/[0.01] border-success/15'
+                                    : 'bg-danger/[0.01] border-danger/15'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between gap-3 mb-3">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[9px] font-bold ${
+                                      isSubCorrect ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
+                                    }`}>
+                                      Part {String.fromCharCode(65 + sIdx)}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider">
+                                      {subQ.type === 'mcq' ? 'Multiple Choice' : 'Essay'}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    {isSubCorrect ? (
+                                      <CheckCircle2 size={12} className="text-success" />
+                                    ) : (
+                                      <XCircle size={12} className="text-danger" />
+                                    )}
+                                    <span className={`text-[10px] font-bold ${isSubCorrect ? 'text-success-dark' : 'text-danger-dark'}`}>
+                                      {isSubCorrect ? 'Correct' : 'Needs Review'}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="text-sm font-bold text-gray-900 dark:text-white leading-relaxed mb-3">
+                                   {renderFormattedText(subQ.text, "text-sm font-bold text-gray-900 dark:text-white leading-relaxed mb-3")}
+                                </div>
+
+                                {subQ.type === 'mcq' && subQ.options && (
+                                  <div className="space-y-2">
+                                    <div className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs ${
+                                      isSubCorrect ? 'bg-success/5 border border-success/10' : 'bg-danger/5 border border-danger/10'
+                                    } border`}>
+                                      <span className="font-bold text-[10px] uppercase">Your Pick:</span>
+                                      <span className="font-medium">
+                                        {subAns !== undefined ? subQ.options[subAns] : 'Not answered'}
+                                      </span>
+                                    </div>
+                                    {!isSubCorrect && (
+                                      <div className="flex items-center gap-2.5 px-3 py-2 bg-success/5 border border-success/10 rounded-xl text-xs border">
+                                        <span className="font-bold text-[10px] uppercase text-success">Correct:</span>
+                                        <span className="font-medium text-success-dark">
+                                          {subQ.options[subQ.correctIndex ?? 0]}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {subQ.type === 'essay' && (
+                                  <div className="space-y-3">
+                                    <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-3.5 border border-gray-100 dark:border-gray-800 text-xs">
+                                      <span className="font-bold text-[10px] uppercase text-gray-400 block mb-1">Your Notes:</span>
+                                      {renderFormattedText(subAns?.text || 'No draft notes recorded.', "font-medium text-gray-700 dark:text-gray-300 italic whitespace-pre-wrap text-left")}
+                                    </div>
+                                    <div className="bg-success/[0.02] rounded-xl p-3.5 border border-success/10 text-xs">
+                                      <span className="font-bold text-[10px] uppercase text-success block mb-1">Reference Answer:</span>
+                                      {renderFormattedText(subQ.modelAnswer, "font-semibold text-success-dark leading-relaxed text-left whitespace-pre-wrap")}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Sub-question explanation / concept review */}
+                                {subQ.explanation && (
+                                  <div className="mt-3 bg-biochem/[0.02] rounded-xl p-3.5 border border-biochem/10 text-xs">
+                                    <div className="flex gap-2">
+                                      <Lightbulb size={13} className="text-biochem mt-0.5 flex-shrink-0" />
+                                      <div className="text-left flex-1 min-w-0">
+                                        <span className="font-bold text-[10px] uppercase text-biochem-dark block mb-1">Explanation</span>
+                                        {renderFormattedText(subQ.explanation, "text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap text-left")}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -438,9 +734,9 @@ export function ResultsDashboard({
                           <div className="w-8 h-8 rounded-xl bg-biochem/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                             <Lightbulb size={14} className="text-biochem" />
                           </div>
-                          <div>
+                          <div className="flex-1 min-w-0">
                             <h4 className="text-xs font-bold text-biochem-dark uppercase tracking-wider mb-2">Explanation</h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{q.explanation}</p>
+                            {renderFormattedText(q.explanation, "text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap text-left")}
                           </div>
                         </div>
                       </div>
@@ -453,9 +749,9 @@ export function ResultsDashboard({
                           <div className="w-8 h-8 rounded-xl bg-physiology/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                             <Bookmark size={14} className="text-physiology" />
                           </div>
-                          <div>
+                          <div className="flex-1 min-w-0">
                             <h4 className="text-xs font-bold text-physiology-dark uppercase tracking-wider mb-2">Key Concept</h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{q.keyConcept}</p>
+                            {renderFormattedText(q.keyConcept, "text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap text-left")}
                           </div>
                         </div>
                       </div>
@@ -517,9 +813,15 @@ export function ResultsDashboard({
           </button>
         </div>
 
-        <div className="mt-12 pb-8 text-center">
-          <p className="text-[11px] text-gray-300 dark:text-gray-600 font-medium">
+        <div className="mt-12 pb-8 text-center space-y-1.5">
+          <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
             Endocrine Module Quiz • Chapter {chapter.id}: {chapter.title} • {subject ? subject.name : 'All Subjects'} • 2nd Year Medical Students
+          </p>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium">
+            For inquiries or to report errors, please contact:{' '}
+            <a href="mailto:omarhmaged@gmail.com" className="hover:text-gray-900 dark:hover:text-white transition-colors underline font-semibold">
+              omarhmaged@gmail.com
+            </a>
           </p>
         </div>
       </div>

@@ -83,6 +83,14 @@ export function ChapterSelect({ onSelectChapter }: Props) {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-6px); }
         }
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes drawLine {
+          to { stroke-dashoffset: 0; }
+        }
         .card-animate { animation: fadeInUp 600ms cubic-bezier(0.34,1.56,0.64,1) both; }
         .card-animate:nth-child(1) { animation-delay: 80ms; }
         .card-animate:nth-child(2) { animation-delay: 160ms; }
@@ -92,8 +100,8 @@ export function ChapterSelect({ onSelectChapter }: Props) {
         .header-anim { animation: fadeInUp 500ms ease-out both; }
         .header-sub { animation: fadeInUp 500ms ease-out 150ms both; }
         .header-stats { animation: fadeInUp 500ms ease-out 300ms both; }
-        .blob-1 { animation: float 6s ease-in-out infinite; }
-        .blob-2 { animation: float 8s ease-in-out infinite reverse; }
+        .blob-1 { animation: float 6s ease-in-out infinite; transform: translate3d(0, 0, 0); will-change: transform; }
+        .blob-2 { animation: float 8s ease-in-out infinite reverse; transform: translate3d(0, 0, 0); will-change: transform; }
         .dot-grid {
           background-image: radial-gradient(circle, rgba(0,0,0,0.04) 1px, transparent 1px);
           background-size: 20px 20px;
@@ -101,8 +109,31 @@ export function ChapterSelect({ onSelectChapter }: Props) {
         .dark .dot-grid {
           background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
         }
-        .chapter-card { transition: all 350ms cubic-bezier(0.34,1.56,0.64,1); }
-        .chapter-card:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 20px 40px -12px rgba(0,0,0,0.12), 0 8px 20px -8px rgba(0,0,0,0.08); }
+        .glass-panel {
+          background: rgba(255, 255, 255, 0.65);
+          backdrop-filter: blur(18px) saturate(130%);
+          border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .dark .glass-panel {
+          background: rgba(15, 15, 25, 0.65);
+          backdrop-filter: blur(18px) saturate(130%);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .gradient-title {
+          background: linear-gradient(120deg, #10B981, #06B6D4, #3B82F6, #8B5CF6);
+          background-size: 300% 300%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: gradientShift 8s ease infinite;
+        }
+        .chapter-card {
+          transition: all 350ms cubic-bezier(0.34,1.56,0.64,1);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01), 0 10px 20px -5px rgba(0, 0, 0, 0.02);
+        }
+        .chapter-card:hover {
+          transform: translateY(-6px) scale(1.01);
+          box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.08), 0 8px 24px -8px rgba(0, 0, 0, 0.04);
+        }
         .chapter-card:active { transform: translateY(-2px) scale(0.995); }
         .btn-start { transition: all 300ms cubic-bezier(0.34,1.56,0.64,1); }
         .btn-start:hover { transform: scale(0.97); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
@@ -111,6 +142,13 @@ export function ChapterSelect({ onSelectChapter }: Props) {
         .badge-pill:hover { transform: scale(1.08); }
         .history-card { transition: all 250ms ease; }
         .history-card:hover { transform: translateY(-2px); }
+        .ecg-line {
+          stroke-dasharray: 1000;
+          stroke-dashoffset: 1000;
+          animation: drawLine 6s linear infinite;
+          transform: translate3d(0, 0, 0);
+          will-change: transform;
+        }
       `}</style>
 
       {/* HERO HEADER */}
@@ -119,14 +157,27 @@ export function ChapterSelect({ onSelectChapter }: Props) {
         <div className="blob-1 absolute -top-20 -right-20 w-72 h-72 rounded-full bg-gradient-to-br from-physiology/10 to-clinical/10 blur-3xl" />
         <div className="blob-2 absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-gradient-to-br from-biochem/10 to-pharma/10 blur-3xl" />
 
+        {/* ECG Heartbeat line background */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] dark:opacity-[0.05]">
+          <svg className="w-full h-40 text-gray-900 dark:text-white" viewBox="0 0 400 100" preserveAspectRatio="none">
+            <path
+              className="ecg-line"
+              d="M 0 50 L 120 50 L 130 30 L 140 70 L 150 45 L 155 55 L 160 50 L 280 50 L 290 20 L 300 80 L 310 40 L 315 60 L 320 50 L 400 50"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+          </svg>
+        </div>
+
         <div className="relative max-w-6xl mx-auto px-6 py-12 lg:py-16">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             <div>
               <div className="header-anim inline-flex items-center gap-2 px-4 py-1.5 bg-physiology/10 text-physiology-dark rounded-full text-xs font-semibold tracking-wide uppercase mb-5">
                 2nd Year Ain Shams University <GraduationCap size={14} />
               </div>
-              <h1 className="header-anim font-archivo text-5xl lg:text-6xl font-black text-gray-900 dark:text-white tracking-tight leading-none mb-3">
-                Endocrine Module
+              <h1 className="header-anim font-archivo text-5xl lg:text-6xl font-black tracking-tight leading-none mb-3">
+                <span className="gradient-title">Endocrine Module</span>
               </h1>
               <p className="header-sub text-gray-500 dark:text-gray-400 text-lg font-medium max-w-lg leading-relaxed">
                 Master the endocrine system through structured, chapter-based assessments.
@@ -162,7 +213,7 @@ export function ChapterSelect({ onSelectChapter }: Props) {
           {chapters.map((chapter) => (
             <div
               key={chapter.id}
-              className="card-animate chapter-card bg-white dark:bg-gray-900 rounded-[30px] p-7 shadow-sm border border-gray-100 dark:border-gray-800 cursor-pointer group relative overflow-hidden"
+              className="card-animate chapter-card glass-panel rounded-[30px] p-7 cursor-pointer group relative overflow-hidden"
               onClick={() => onSelectChapter(chapter)}
             >
               <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl ${cornerGradient[chapter.accentColor]} to-transparent rounded-bl-[60px]`} />
@@ -272,7 +323,7 @@ export function ChapterSelect({ onSelectChapter }: Props) {
         )}
 
         {/* SUBJECT LEGEND */}
-        <div className="mt-12 p-6 bg-white dark:bg-gray-900 rounded-[24px] border border-gray-100 dark:border-gray-800 shadow-sm">
+        <div className="mt-12 p-6 glass-panel rounded-[24px] shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <Palette size={16} className="text-gray-400 dark:text-gray-500" />
             <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Subject Color Guide</span>
@@ -297,9 +348,15 @@ export function ChapterSelect({ onSelectChapter }: Props) {
           </div>
         </div>
 
-        <div className="mt-10 pb-8 text-center">
-          <p className="text-xs text-gray-300 dark:text-gray-600 font-medium">
+        <div className="mt-10 pb-8 text-center space-y-1.5">
+          <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
             2nd Year Medical Students • Endocrine System Module
+          </p>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium">
+            For inquiries or to report errors, please contact:{' '}
+            <a href="mailto:omarhmaged@gmail.com" className="hover:text-gray-900 dark:hover:text-white transition-colors underline font-semibold">
+              omarhmaged@gmail.com
+            </a>
           </p>
         </div>
       </div>

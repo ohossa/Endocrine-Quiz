@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ArrowLeft,
   ChevronRight,
@@ -14,9 +14,67 @@ import {
   Activity,
   ArrowRight,
   List,
+  Keyboard,
 } from 'lucide-react';
 import { ChapterData, SubjectData, Question, SubjectColor, subjectStyles, formatTime } from '../types';
 import { ThemeToggle } from './ThemeToggle';
+import { shuffleArray } from '../data';
+
+const renderFormattedText = (
+  text: string | undefined,
+  fallbackClassName: string = "text-sm font-medium text-gray-700 dark:text-gray-300 leading-relaxed mb-4 whitespace-pre-wrap text-left"
+) => {
+  if (!text) return null;
+  if (text.includes('|')) {
+    const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+    const rows = lines
+      .filter((line) => !line.includes('---') && line.includes('|'))
+      .map((line) => {
+        const parts = line.split('|');
+        if (parts[0] === '') parts.shift();
+        if (parts[parts.length - 1] === '') parts.pop();
+        return parts.map((cell) => cell.trim());
+      });
+
+    if (rows.length > 0) {
+      const headers = rows[0];
+      const bodyRows = rows.slice(1);
+
+      return (
+        <div className="overflow-x-auto my-4 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 text-left">
+          <table className="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                {headers.map((h, idx) => (
+                  <th key={idx} className="p-4 text-[10px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              {bodyRows.map((row, rIdx) => (
+                <tr key={rIdx} className="hover:bg-gray-50/50 dark:hover:bg-gray-950/30 transition-colors">
+                  {row.map((cell, cIdx) => (
+                    <td key={cIdx} className="p-4 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+  }
+  return (
+    <div className={fallbackClassName}>
+      {text}
+    </div>
+  );
+};
+
 
 interface Props {
   chapter: ChapterData;
@@ -28,27 +86,147 @@ interface Props {
 
 export function QuizInterface({ chapter, subject, questions, onBack, onFinish }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, number>>({});
-  const [seconds, setSeconds] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, any>>({});
   const [flagged, setFlagged] = useState<Set<number>>(new Set());
+  const secondsRef = useRef(0);
+
+  // New matching/essay state variables
+  const [draftMatching, setDraftMatching] = useState<Record<number, number>>({});
+  const [selectedPremise, setSelectedPremise] = useState<number | null>(null);
+  const [essayDraft, setEssayDraft] = useState('');
+  const [showEssayAnswer, setShowEssayAnswer] = useState(false);
+
+  // Case study sub-essay states
+  const [subEssayDrafts, setSubEssayDrafts] = useState<Record<string, string>>({});
+  const [revealedSubEssays, setRevealedSubEssays] = useState<Record<string, boolean>>({});
+  const [showKeyboardHelper, setShowKeyboardHelper] = useState(false);
+
+  // Reference for scrambled matching target orders
+  const scrambledTargetsRef = useRef<Record<number, string[]>>({});
 
   useEffect(() => {
-    const t = setInterval(() => setSeconds((s) => s + 1), 1000);
-    return () => clearInterval(t);
+    const scrambled: Record<number, string[]> = {};
+    questions.forEach((q, idx) => {
+      if (q.type === 'matching' && q.pairs) {
+        scrambled[idx] = shuffleArray(q.pairs.map((p) => p.target));
+      }
+    });
+    scrambledTargetsRef.current = scrambled;
+  }, [questions]);
+
+  useEffect(() => {
+    setDraftMatching(answers[currentIdx] || {});
+    setEssayDraft(answers[currentIdx]?.text || '');
+    setShowEssayAnswer(false);
+    setSelectedPremise(null);
+
+    // Load case study sub-question essay drafts and clear revealed toggles
+    const caseDrafts: Record<string, string> = {};
+    const currentQ = questions[currentIdx];
+    if (currentQ?.type === 'case' && currentQ.subQuestions) {
+      currentQ.subQuestions.forEach((subQ) => {
+        if (subQ.type === 'essay') {
+          caseDrafts[subQ.id] = answers[currentIdx]?.[subQ.id]?.text || '';
+        }
+      });
+    }
+    setSubEssayDrafts(caseDrafts);
+    setRevealedSubEssays({});
+  }, [currentIdx, answers, questions]);
+
+
+
+  const handleTick = useCallback((seconds: number) => {
+    secondsRef.current = seconds;
+  }, []);
+
+  const checkAnswerCorrect = useCallback((q: Question, ans: any, qIdx: number) => {
+    if (ans === undefined) return false;
+    if (q.type === 'mcq' || q.type === 'truefalse') {
+      return ans === q.correctIndex;
+    }
+    if (q.type === 'matching') {
+      const scrambled = ans.scrambled || scrambledTargetsRef.current[qIdx];
+      const matches = ans.matches || ans;
+      if (!scrambled || !matches || !q.pairs) return false;
+      return q.pairs.every((pair, pIdx) => {
+        const correctTargetIdx = scrambled.indexOf(pair.target);
+        return matches[pIdx] === correctTargetIdx;
+      });
+    }
+    if (q.type === 'essay') {
+      return ans?.selfGrade === 'correct';
+    }
+    if (q.type === 'case' && q.subQuestions) {
+      return q.subQuestions.every((subQ) => {
+        const subAns = ans[subQ.id];
+        if (subAns === undefined) return false;
+        if (subQ.type === 'mcq') {
+          return subAns === subQ.correctIndex;
+        }
+        if (subQ.type === 'essay') {
+          return subAns?.selfGrade === 'correct';
+        }
+        return false;
+      });
+    }
+    return false;
+  }, []);
+
+  const isQuestionCompleted = useCallback((q: Question, ans: any) => {
+    if (ans === undefined) return false;
+    if (q.type === 'case' && q.subQuestions) {
+      return q.subQuestions.every((subQ) => ans[subQ.id] !== undefined);
+    }
+    return true;
   }, []);
 
   const current = questions[currentIdx];
-  const answered = current !== undefined && answers[currentIdx] !== undefined;
+  const answered = current !== undefined && isQuestionCompleted(current, answers[currentIdx]);
   const selectedIdx = answers[currentIdx];
-  const isCorrect = answered && selectedIdx === current.correctIndex;
+  const isCorrect = answered && checkAnswerCorrect(current, answers[currentIdx], currentIdx);
   const subjectColor: SubjectColor = (current?.subjectColor as SubjectColor) ?? 'physiology';
   const s = subjectStyles[subjectColor];
 
-  const correctCount = Object.entries(answers).filter(
-    ([idx, ans]) => questions[Number(idx)]?.correctIndex === ans,
-  ).length;
-  const answeredCount = Object.keys(answers).length;
-  const pct = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
+  const getScoreStats = useCallback(() => {
+    let totalPoints = 0;
+    let answeredPoints = 0;
+    let correctPoints = 0;
+
+    questions.forEach((q, idx) => {
+      const ans = answers[idx];
+      if (q.type === 'case' && q.subQuestions) {
+        totalPoints += q.subQuestions.length;
+        if (ans) {
+          q.subQuestions.forEach((subQ) => {
+            const subAns = ans[subQ.id];
+            if (subAns !== undefined) {
+              answeredPoints++;
+              const isSubCorrect = subQ.type === 'mcq'
+                ? subAns === subQ.correctIndex
+                : subAns?.selfGrade === 'correct';
+              if (isSubCorrect) correctPoints++;
+            }
+          });
+        }
+      } else {
+        totalPoints += 1;
+        if (ans !== undefined) {
+          answeredPoints++;
+          if (checkAnswerCorrect(q, ans, idx)) {
+            correctPoints++;
+          }
+        }
+      }
+    });
+
+    return { totalPoints, answeredPoints, correctPoints };
+  }, [questions, answers, checkAnswerCorrect]);
+
+  const { totalPoints, answeredPoints, correctPoints } = getScoreStats();
+  const correctCount = correctPoints;
+  const answeredCount = answeredPoints;
+  const pct = answeredPoints > 0 ? Math.round((correctPoints / answeredPoints) * 100) : 0;
   const circumference = 2 * Math.PI * 28;
   const offset = circumference - (pct / 100) * circumference;
 
@@ -60,7 +238,7 @@ export function QuizInterface({ chapter, subject, questions, onBack, onFinish }:
     [answered, currentIdx],
   );
 
-  const handleFinish = () => onFinish(answers, seconds, flagged);
+  const handleFinish = () => onFinish(answers, secondsRef.current, flagged);
 
   const toggleFlag = (idx: number) => {
     setFlagged((prev) => {
@@ -70,6 +248,53 @@ export function QuizInterface({ chapter, subject, questions, onBack, onFinish }:
       return next;
     });
   };
+
+  // Keyboard Navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+
+      // If helper modal is open, Escape should close it
+      if (showKeyboardHelper && key === 'escape') {
+        setShowKeyboardHelper(false);
+        return;
+      }
+
+      // If student is typing in an essay textarea, don't trigger quiz navigation shortcuts!
+      if (document.activeElement?.tagName === 'TEXTAREA' || document.activeElement?.tagName === 'INPUT') {
+        return;
+      }
+
+      if (key === 'f') {
+        toggleFlag(currentIdx);
+      } else if (key === 'arrowleft') {
+        setCurrentIdx((i) => Math.max(0, i - 1));
+      } else if (key === 'arrowright') {
+        if (currentIdx < questions.length - 1) {
+          setCurrentIdx((i) => i + 1);
+        }
+      } else if (key === 'a' || key === 'b' || key === 'c' || key === 'd') {
+        const idx = key.charCodeAt(0) - 97;
+        const currentQ = questions[currentIdx];
+        if (currentQ) {
+          if (currentQ.type === 'mcq' && currentQ.options && idx < currentQ.options.length) {
+            handleSelect(idx);
+          } else if (currentQ.type === 'truefalse' && idx < 2) {
+            handleSelect(idx);
+          }
+        }
+      } else if (key === 'enter') {
+        if (currentIdx < questions.length - 1) {
+          setCurrentIdx((i) => i + 1);
+        } else {
+          handleFinish();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentIdx, questions, handleSelect, handleFinish, showKeyboardHelper]);
 
   if (!current) return null;
 
@@ -173,11 +398,15 @@ export function QuizInterface({ chapter, subject, questions, onBack, onFinish }:
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-                <Clock size={14} className="text-gray-400 dark:text-gray-500" />
-                <span className="text-sm font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{formatTime(seconds)}</span>
-              </div>
+              <QuizTimer onTick={handleTick} />
               <ThemeToggle />
+              <button
+                onClick={() => setShowKeyboardHelper(true)}
+                className="hidden lg:inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-gray-700 nav-btn"
+                title="Keyboard Shortcuts"
+              >
+                <Keyboard size={18} />
+              </button>
               <button
                 onClick={handleFinish}
                 className="nav-btn inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent hover:border-gray-100 dark:hover:border-gray-700"
@@ -196,7 +425,7 @@ export function QuizInterface({ chapter, subject, questions, onBack, onFinish }:
 
       {/* MAIN LAYOUT */}
       <div className="max-w-7xl mx-auto px-6 lg:px-10 py-8 lg:py-12">
-        <div className="flex gap-8 lg:gap-12">
+        <div className="flex flex-col xl:flex-row gap-8 lg:gap-12">
 
           {/* LEFT: QUIZ AREA */}
           <div className="flex-1 max-w-3xl">
@@ -213,7 +442,15 @@ export function QuizInterface({ chapter, subject, questions, onBack, onFinish }:
                   <div className="flex items-center gap-3">
                     <span className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full ${s.bgOp8} ${s.textDark} text-[11px] font-bold uppercase tracking-wider`}>
                       <List size={11} />
-                      {current.type === 'truefalse' ? 'True / False' : 'Multiple Choice'}
+                      {current.type === 'truefalse'
+                        ? 'True / False'
+                        : current.type === 'matching'
+                        ? 'Matching'
+                        : current.type === 'essay'
+                        ? 'Essay'
+                        : current.type === 'case'
+                        ? 'Clinical Case Study'
+                        : 'Multiple Choice'}
                     </span>
                   </div>
                   <button
@@ -233,161 +470,746 @@ export function QuizInterface({ chapter, subject, questions, onBack, onFinish }:
                   <span className="flex-shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-archivo font-black text-sm mt-0.5">
                     {currentIdx + 1}
                   </span>
-                  <h2 className="font-archivo text-xl lg:text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-relaxed">
-                    {current.text}
-                  </h2>
+                  <div className="font-archivo text-xl lg:text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-relaxed">
+                    {renderFormattedText(current.text, "font-archivo text-xl lg:text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-relaxed")}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* OPTIONS */}
-            <div key={`opts-${currentIdx}`} className="mt-5 space-y-3">
-              {current.options.map((option, idx) => {
-                const isSelected = answered && selectedIdx === idx;
-                const isCorrectOpt = idx === current.correctIndex;
-                const showResult = answered;
+            <div key={`opts-${currentIdx}`} className="mt-5">
+              {current.type === 'mcq' && current.options && (
+                <div className="space-y-3">
+                  {current.options.map((option, idx) => {
+                    const isSelected = answered && selectedIdx === idx;
+                    const isCorrectOpt = idx === current.correctIndex;
+                    const showResult = answered;
 
-                let className = 'option-animate option-btn bg-white dark:bg-gray-900 rounded-3xl px-6 py-5 border-2 cursor-pointer group relative overflow-hidden ';
+                    let className = 'option-animate option-btn bg-white dark:bg-gray-900 rounded-3xl px-6 py-5 border-2 cursor-pointer group relative overflow-hidden ';
 
-                if (!showResult) {
-                  className += 'border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700';
-                } else if (isCorrectOpt) {
-                  className += `border-success/30 correct-glow`;
-                } else if (isSelected && !isCorrectOpt) {
-                  className += `border-danger/30 wrong-shake`;
-                } else {
-                  className += 'border-gray-100 dark:border-gray-800 opacity-50 cursor-not-allowed';
-                }
+                    if (!showResult) {
+                      className += 'border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700';
+                    } else if (isCorrectOpt) {
+                      className += `border-success/30 correct-glow`;
+                    } else if (isSelected && !isCorrectOpt) {
+                      className += `border-danger/30 wrong-shake`;
+                    } else {
+                      className += 'border-gray-100 dark:border-gray-800 opacity-50 cursor-not-allowed';
+                    }
+
+                    return (
+                      <div
+                        key={idx}
+                        className={className}
+                        style={
+                          showResult && isCorrectOpt
+                            ? { boxShadow: '0 2px 16px -2px rgba(34,197,94,0.12)' }
+                            : showResult && isSelected && !isCorrectOpt
+                            ? { boxShadow: '0 2px 16px -2px rgba(239,68,68,0.08)' }
+                            : {}
+                        }
+                        onClick={() => !showResult && handleSelect(idx)}
+                      >
+                        {showResult && isCorrectOpt && (
+                          <div className="absolute inset-0 bg-success/[0.03]" />
+                        )}
+                        {showResult && isSelected && !isCorrectOpt && (
+                          <div className="absolute inset-0 bg-danger/[0.02]" />
+                        )}
+
+                        <div className="relative flex items-center gap-4">
+                          {showResult && isCorrectOpt ? (
+                            <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-success/10 border-2 border-success/30 flex items-center justify-center">
+                              <Check size={20} className="icon-pop text-success" />
+                            </div>
+                          ) : showResult && isSelected && !isCorrectOpt ? (
+                            <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-danger/10 border-2 border-danger/25 flex items-center justify-center">
+                              <X size={20} className="icon-pop text-danger" />
+                            </div>
+                          ) : (
+                            <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 flex items-center justify-center font-archivo font-bold text-sm text-gray-400 dark:text-gray-500">
+                              {String.fromCharCode(65 + idx)}
+                            </div>
+                          )}
+
+                          <div
+                            className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                              showResult && isCorrectOpt
+                                ? 'border-success bg-success'
+                                : showResult && isSelected && !isCorrectOpt
+                                ? 'border-danger bg-danger'
+                                : 'border-gray-200 dark:border-gray-700'
+                            }`}
+                          >
+                            {(showResult && (isCorrectOpt || isSelected)) && (
+                              <div className="w-2 h-2 rounded-full bg-white" />
+                            )}
+                          </div>
+
+                          <span
+                            className={`text-base font-semibold leading-snug flex-1 ${
+                              showResult && isCorrectOpt
+                                ? 'text-success-dark'
+                                : showResult && isSelected && !isCorrectOpt
+                                ? 'text-danger-dark line-through decoration-danger/30 decoration-2'
+                                : 'text-gray-700 dark:text-gray-300'
+                            }`}
+                          >
+                            {option}
+                          </span>
+
+                          {showResult && isCorrectOpt && (
+                            <span className="ml-auto inline-flex items-center gap-1 px-3 py-1 rounded-full bg-success/10 text-success text-[10px] font-bold uppercase tracking-wider flex-shrink-0">
+                              <Check size={10} />
+                              Correct
+                            </span>
+                          )}
+                          {showResult && isSelected && !isCorrectOpt && (
+                            <span className="ml-auto inline-flex items-center gap-1 px-3 py-1 rounded-full bg-danger/10 text-danger text-[10px] font-bold uppercase tracking-wider flex-shrink-0">
+                              <X size={10} />
+                              Your Pick
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {current.type === 'truefalse' && current.options && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    { label: 'True', idx: 0, color: 'success', text: 'True Statement' },
+                    { label: 'False', idx: 1, color: 'danger', text: 'False Statement' }
+                  ].map((item) => {
+                    const isSelected = answered && selectedIdx === item.idx;
+                    const isCorrectOpt = item.idx === current.correctIndex;
+                    const showResult = answered;
+
+                    let cardClass = 'option-btn rounded-[24px] p-6 border-2 flex flex-col items-center justify-center text-center cursor-pointer transition-all ';
+
+                    if (!showResult) {
+                      cardClass += 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 hover:border-gray-300';
+                    } else if (isCorrectOpt) {
+                      cardClass += 'border-success bg-success/[0.03] correct-glow';
+                    } else if (isSelected && !isCorrectOpt) {
+                      cardClass += 'border-danger bg-danger/[0.02] wrong-shake';
+                    } else {
+                      cardClass += 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 opacity-50 cursor-not-allowed';
+                    }
+
+                    return (
+                      <div
+                        key={item.idx}
+                        className={cardClass}
+                        onClick={() => !showResult && handleSelect(item.idx)}
+                      >
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 ${
+                          showResult && isCorrectOpt
+                            ? 'bg-success/10 text-success'
+                            : showResult && isSelected && !isCorrectOpt
+                            ? 'bg-danger/10 text-danger'
+                            : item.idx === 0
+                            ? 'bg-success/5 text-success'
+                            : 'bg-danger/5 text-danger'
+                        }`}>
+                          {showResult && isCorrectOpt ? (
+                            <Check size={28} className="icon-pop" />
+                          ) : showResult && isSelected && !isCorrectOpt ? (
+                            <X size={28} className="icon-pop" />
+                          ) : item.idx === 0 ? (
+                            <Check size={28} />
+                          ) : (
+                            <X size={28} />
+                          )}
+                        </div>
+                        <span className="font-archivo text-xl font-bold text-gray-900 dark:text-white mb-1">{item.label}</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider">{item.text}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {current.type === 'matching' && (() => {
+                const scrambled = scrambledTargetsRef.current[currentIdx] || [];
+                const isAnswered = answered;
+                const studentAnswers = answered ? answers[currentIdx] : draftMatching;
+
+                const getTargetForPremise = (pIdx: number) => {
+                  const tIdx = studentAnswers[pIdx];
+                  return tIdx !== undefined ? scrambled[tIdx] : null;
+                };
+
+                const isTargetMatched = (tIdx: number) => {
+                  return Object.values(studentAnswers).includes(tIdx);
+                };
+
+                const handlePremiseClick = (pIdx: number) => {
+                  if (isAnswered) return;
+                  setSelectedPremise(pIdx);
+                };
+
+                const handleTargetClick = (tIdx: number) => {
+                  if (isAnswered || selectedPremise === null) return;
+                  setDraftMatching((prev) => ({
+                    ...prev,
+                    [selectedPremise]: tIdx,
+                  }));
+                  setSelectedPremise(null);
+                };
+
+                const handleUnpair = (e: React.MouseEvent, pIdx: number) => {
+                  e.stopPropagation();
+                  if (isAnswered) return;
+                  setDraftMatching((prev) => {
+                    const next = { ...prev };
+                    delete next[pIdx];
+                    return next;
+                  });
+                  setSelectedPremise(null);
+                };
+
+                const allMatched = current.pairs && Object.keys(draftMatching).length === current.pairs.length;
+
+                const handleSubmitMatch = () => {
+                  if (isAnswered) return;
+                  setAnswers((prev) => ({
+                    ...prev,
+                    [currentIdx]: { matches: draftMatching, scrambled },
+                  }));
+                };
 
                 return (
-                  <div
-                    key={idx}
-                    className={className}
-                    style={
-                      showResult && isCorrectOpt
-                        ? { boxShadow: '0 2px 16px -2px rgba(34,197,94,0.12)' }
-                        : showResult && isSelected && !isCorrectOpt
-                        ? { boxShadow: '0 2px 16px -2px rgba(239,68,68,0.08)' }
-                        : {}
-                    }
-                    onClick={() => !showResult && handleSelect(idx)}
-                  >
-                    {showResult && isCorrectOpt && (
-                      <div className="absolute inset-0 bg-success/[0.03]" />
-                    )}
-                    {showResult && isSelected && !isCorrectOpt && (
-                      <div className="absolute inset-0 bg-danger/[0.02]" />
-                    )}
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <h4 className="font-archivo text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Premises</h4>
+                        {current.pairs?.map((pair, pIdx) => {
+                          const pairedTarget = getTargetForPremise(pIdx);
+                          const isSelected = selectedPremise === pIdx;
+                          const isPairCorrect = isAnswered && studentAnswers[pIdx] === scrambled.indexOf(pair.target);
 
-                    <div className="relative flex items-center gap-4">
-                      {showResult && isCorrectOpt ? (
-                        <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-success/10 border-2 border-success/30 flex items-center justify-center">
-                          <Check size={20} className="icon-pop text-success" />
-                        </div>
-                      ) : showResult && isSelected && !isCorrectOpt ? (
-                        <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-danger/10 border-2 border-danger/25 flex items-center justify-center">
-                          <X size={20} className="icon-pop text-danger" />
-                        </div>
-                      ) : (
-                        <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 flex items-center justify-center font-archivo font-bold text-sm text-gray-400 dark:text-gray-500">
-                          {String.fromCharCode(65 + idx)}
-                        </div>
-                      )}
+                          let itemClass = 'option-btn border-2 rounded-2xl p-4 flex items-center justify-between cursor-pointer transition-all ';
+                          if (isAnswered) {
+                            itemClass += isPairCorrect
+                              ? 'border-success/30 bg-success/[0.02]'
+                              : 'border-danger/25 bg-danger/[0.02]';
+                          } else if (isSelected) {
+                            itemClass += `${s.border} ${s.bgOp5} ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-900 ring-physiology`;
+                          } else {
+                            itemClass += 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-gray-300';
+                          }
 
-                      <div
-                        className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          showResult && isCorrectOpt
-                            ? 'border-success bg-success'
-                            : showResult && isSelected && !isCorrectOpt
-                            ? 'border-danger bg-danger'
-                            : 'border-gray-200 dark:border-gray-700'
-                        }`}
-                      >
-                        {(showResult && (isCorrectOpt || isSelected)) && (
-                          <div className="w-2 h-2 rounded-full bg-white" />
-                        )}
+                          return (
+                            <div key={pIdx} className={itemClass} onClick={() => handlePremiseClick(pIdx)}>
+                              <div className="flex-1 min-w-0 pr-3">
+                                <span className="text-sm font-bold text-gray-900 dark:text-white block truncate">{pair.premise}</span>
+                                {pairedTarget ? (
+                                  <span className={`text-xs font-semibold mt-1 block truncate ${
+                                    isAnswered ? (isPairCorrect ? 'text-success-dark' : 'text-danger-dark') : s.textDark
+                                  }`}>
+                                    Matched to: <strong className="underline">{pairedTarget}</strong>
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-gray-400 dark:text-gray-500 italic block mt-1">
+                                    {isSelected ? 'Select target on the right...' : 'Click to select & pair...'}
+                                  </span>
+                                )}
+                              </div>
+                              {pairedTarget && !isAnswered && (
+                                <button
+                                  onClick={(e) => handleUnpair(e, pIdx)}
+                                  className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-danger transition-colors"
+                                >
+                                  <X size={14} />
+                                </button>
+                              )}
+                              {isAnswered && (
+                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                  isPairCorrect ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
+                                }`}>
+                                  {isPairCorrect ? <Check size={14} /> : <X size={14} />}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
 
-                      <span
-                        className={`text-base font-semibold leading-snug flex-1 ${
-                          showResult && isCorrectOpt
-                            ? 'text-success-dark'
-                            : showResult && isSelected && !isCorrectOpt
-                            ? 'text-danger-dark line-through decoration-danger/30 decoration-2'
-                            : 'text-gray-700 dark:text-gray-300'
-                        }`}
-                      >
-                        {option}
-                      </span>
+                      <div className="space-y-3">
+                        <h4 className="font-archivo text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Targets</h4>
+                        {scrambled.map((target, tIdx) => {
+                          const matched = isTargetMatched(tIdx);
+                          let targetClass = 'option-btn border-2 rounded-2xl p-4 flex items-center justify-between transition-all ';
 
-                      {showResult && isCorrectOpt && (
-                        <span className="ml-auto inline-flex items-center gap-1 px-3 py-1 rounded-full bg-success/10 text-success text-[10px] font-bold uppercase tracking-wider flex-shrink-0">
-                          <Check size={10} />
-                          Correct
-                        </span>
-                      )}
-                      {showResult && isSelected && !isCorrectOpt && (
-                        <span className="ml-auto inline-flex items-center gap-1 px-3 py-1 rounded-full bg-danger/10 text-danger text-[10px] font-bold uppercase tracking-wider flex-shrink-0">
-                          <X size={10} />
-                          Your Pick
-                        </span>
-                      )}
+                          if (isAnswered) {
+                            targetClass += 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 opacity-60';
+                          } else if (matched) {
+                            targetClass += 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 opacity-40 cursor-not-allowed';
+                          } else {
+                            targetClass += 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 cursor-pointer hover:border-gray-300';
+                          }
+
+                          return (
+                            <div
+                              key={tIdx}
+                              className={targetClass}
+                              onClick={() => !matched && handleTargetClick(tIdx)}
+                            >
+                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate">{target}</span>
+                              {matched && !isAnswered && (
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+                                  Paired
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
+
+                    {!isAnswered && (
+                      <div className="flex justify-end mt-4">
+                        <button
+                          onClick={handleSubmitMatch}
+                          disabled={!allMatched}
+                          className={`px-6 py-3 rounded-full text-xs font-bold tracking-wide transition-all ${
+                            allMatched
+                              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:scale-[0.98]'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                          }`}
+                        >
+                          Submit Matches
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
-              })}
+              })()}
+
+              {current.type === 'essay' && (
+                <div className="space-y-4">
+                  <div className="relative">
+                    <textarea
+                      rows={5}
+                      disabled={answered}
+                      value={essayDraft}
+                      onChange={(e) => setEssayDraft(e.target.value)}
+                      placeholder="Type your answer here (optional). If solving in your head, just click 'Reveal Model Answer' below to grade yourself..."
+                      className="w-full rounded-[24px] border-2 border-gray-100 dark:border-gray-800 p-5 text-sm font-semibold bg-white dark:bg-gray-900 focus:border-physiology focus:outline-none disabled:bg-gray-50 dark:disabled:bg-gray-950 disabled:opacity-85 text-gray-700 dark:text-gray-300"
+                    />
+                  </div>
+
+                  {!answered && !showEssayAnswer && (
+                    <div className="flex justify-end gap-3">
+                      <button
+                        onClick={() => setShowEssayAnswer(true)}
+                        className="px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full text-xs font-bold tracking-wide hover:scale-[0.98] transition-transform"
+                      >
+                        Reveal Model Answer
+                      </button>
+                    </div>
+                  )}
+
+                  {(showEssayAnswer || answered) && (
+                    <div className="feedback-animate bg-success/[0.03] border border-success/15 rounded-3xl p-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Lightbulb size={16} className="text-success" />
+                        <span className="text-xs font-bold text-success uppercase tracking-wider">Model Answer Reference</span>
+                      </div>
+                      {renderFormattedText(current.modelAnswer, "text-sm font-medium text-gray-700 dark:text-gray-300 leading-relaxed mb-4 whitespace-pre-wrap text-left")}
+
+                      {!answered && (
+                         <div className="pt-4 border-t border-success/10">
+                           <h4 className="font-archivo text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                             Self-grading
+                           </h4>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => {
+                                setAnswers((prev) => ({
+                                  ...prev,
+                                  [currentIdx]: { text: essayDraft, selfGrade: 'correct' },
+                                }));
+                                setShowEssayAnswer(false);
+                              }}
+                              className="px-5 py-2.5 bg-success text-white hover:bg-success-dark rounded-full text-xs font-bold tracking-wide transition-all"
+                            >
+                              I got it right
+                            </button>
+                            <button
+                              onClick={() => {
+                                setAnswers((prev) => ({
+                                  ...prev,
+                                  [currentIdx]: { text: essayDraft, selfGrade: 'incorrect' },
+                                }));
+                                setShowEssayAnswer(false);
+                              }}
+                              className="px-5 py-2.5 bg-white dark:bg-gray-900 border border-danger/25 text-danger-dark hover:bg-danger/5 rounded-full text-xs font-bold tracking-wide transition-all"
+                            >
+                              I need more review
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {current.type === 'case' && current.subQuestions && (
+                <div className="space-y-6">
+                  {current.subQuestions.map((subQ, sIdx) => {
+                    const subAnswer = answers[currentIdx]?.[subQ.id];
+                    const isSubQAnswered = subAnswer !== undefined;
+
+                    return (
+                      <div
+                        key={subQ.id}
+                        className="p-6 rounded-2xl bg-white/75 dark:bg-gray-900/75 border border-gray-100 dark:border-gray-800 shadow-sm space-y-4"
+                      >
+                        {/* Sub-question Header */}
+                        <div className="flex items-center justify-between">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full ${s.bgOp10} ${s.textDark} text-[10px] font-bold uppercase tracking-wider`}>
+                            Part {String.fromCharCode(65 + sIdx)}
+                          </span>
+                          <span className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">
+                            {subQ.type === 'mcq' ? 'Multiple Choice' : 'Essay'}
+                          </span>
+                        </div>
+
+                        {/* Sub-question Text */}
+                        <div className="text-base font-bold text-gray-900 dark:text-white leading-relaxed">
+                           {renderFormattedText(subQ.text, "text-base font-bold text-gray-900 dark:text-white leading-relaxed")}
+                        </div>
+
+                        {/* MCQ sub-type */}
+                        {subQ.type === 'mcq' && subQ.options && (
+                          <div className="space-y-2.5">
+                            {subQ.options.map((option, optIdx) => {
+                              const isSelected = subAnswer === optIdx;
+                              const isCorrectOpt = optIdx === subQ.correctIndex;
+
+                              let optClass = 'w-full text-left rounded-2xl px-5 py-4 border-2 transition-all flex items-center gap-4 cursor-pointer relative overflow-hidden ';
+                              if (!isSubQAnswered) {
+                                optClass += 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700';
+                              } else if (isCorrectOpt) {
+                                optClass += 'border-success bg-success/[0.03] correct-glow';
+                              } else if (isSelected && !isCorrectOpt) {
+                                optClass += 'border-danger bg-danger/[0.02] wrong-shake';
+                              } else {
+                                optClass += 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 opacity-50 cursor-not-allowed';
+                              }
+
+                              return (
+                                <div
+                                  key={optIdx}
+                                  className={optClass}
+                                  onClick={() => {
+                                    if (isSubQAnswered) return;
+                                    setAnswers((prev) => {
+                                      const cur = prev[currentIdx] || {};
+                                      return {
+                                        ...prev,
+                                        [currentIdx]: { ...cur, [subQ.id]: optIdx }
+                                      };
+                                    });
+                                  }}
+                                >
+                                  {isSubQAnswered && isCorrectOpt ? (
+                                    <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-success/10 border border-success/30 flex items-center justify-center">
+                                      <Check size={16} className="text-success" />
+                                    </div>
+                                  ) : isSubQAnswered && isSelected && !isCorrectOpt ? (
+                                    <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-danger/10 border border-danger/25 flex items-center justify-center">
+                                      <X size={16} className="text-danger" />
+                                    </div>
+                                  ) : (
+                                    <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 flex items-center justify-center font-archivo font-bold text-xs text-gray-400 dark:text-gray-500">
+                                      {String.fromCharCode(65 + optIdx)}
+                                    </div>
+                                  )}
+
+                                  <span className={`text-sm font-semibold leading-snug flex-1 ${
+                                    isSubQAnswered && isCorrectOpt
+                                      ? 'text-success-dark'
+                                      : isSubQAnswered && isSelected && !isCorrectOpt
+                                      ? 'text-danger-dark line-through decoration-danger/30'
+                                      : 'text-gray-700 dark:text-gray-300'
+                                  }`}>
+                                    {option}
+                                  </span>
+
+                                  {isSubQAnswered && isCorrectOpt && (
+                                    <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-success">Correct</span>
+                                  )}
+                                  {isSubQAnswered && isSelected && !isCorrectOpt && (
+                                    <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-danger">Your Pick</span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Essay sub-type */}
+                        {subQ.type === 'essay' && (
+                          <div className="space-y-3">
+                            <textarea
+                              rows={3}
+                              disabled={isSubQAnswered}
+                              value={subEssayDrafts[subQ.id] || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setSubEssayDrafts((prev) => ({ ...prev, [subQ.id]: val }));
+                              }}
+                              placeholder="Type notes (optional). If solving in your head, just click 'Reveal Model Answer' below to grade yourself..."
+                              className="w-full rounded-2xl border-2 border-gray-100 dark:border-gray-800 p-4 text-xs font-semibold bg-white dark:bg-gray-900 focus:border-physiology focus:outline-none disabled:bg-gray-50 dark:disabled:bg-gray-950 disabled:opacity-85 text-gray-700 dark:text-gray-300"
+                            />
+
+                            {!isSubQAnswered && !revealedSubEssays[subQ.id] && (
+                              <div className="flex justify-end">
+                                <button
+                                  onClick={() => setRevealedSubEssays((prev) => ({ ...prev, [subQ.id]: true }))}
+                                  className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full text-[10px] font-bold tracking-wide hover:scale-[0.98] transition-transform"
+                                >
+                                  Reveal Model Answer
+                                </button>
+                              </div>
+                            )}
+
+                            {(revealedSubEssays[subQ.id] || isSubQAnswered) && (
+                              <div className="feedback-animate bg-success/[0.03] border border-success/15 rounded-2xl p-4 space-y-3">
+                                <div className="flex items-center gap-1.5 text-success">
+                                  <Lightbulb size={14} />
+                                  <span className="text-[10px] font-bold uppercase tracking-wider">Model Answer Reference</span>
+                                </div>
+                                {renderFormattedText(subQ.modelAnswer, "text-xs font-medium text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap text-left")}
+
+                                {!isSubQAnswered && (
+                                  <div className="pt-3 border-t border-success/10">
+                                    <h5 className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                      Self-grading
+                                    </h5>
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={() => {
+                                          setAnswers((prev) => {
+                                            const cur = prev[currentIdx] || {};
+                                            return {
+                                              ...prev,
+                                              [currentIdx]: {
+                                                ...cur,
+                                                [subQ.id]: { text: subEssayDrafts[subQ.id] || '', selfGrade: 'correct' }
+                                              }
+                                            };
+                                          });
+                                        }}
+                                        className="px-3 py-1.5 bg-success text-white hover:bg-success-dark rounded-full text-[9px] font-bold tracking-wide transition-all"
+                                      >
+                                        Correct
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setAnswers((prev) => {
+                                            const cur = prev[currentIdx] || {};
+                                            return {
+                                              ...prev,
+                                              [currentIdx]: {
+                                                ...cur,
+                                                [subQ.id]: { text: subEssayDrafts[subQ.id] || '', selfGrade: 'incorrect' }
+                                              }
+                                            };
+                                          });
+                                        }}
+                                        className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-danger/25 text-danger-dark hover:bg-danger/5 rounded-full text-[9px] font-bold tracking-wide transition-all"
+                                      >
+                                        Needs Review
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Sub-question Feedback / Explanations */}
+                        {isSubQAnswered && (
+                          <div className="feedback-animate space-y-2">
+                            {/* Explanations */}
+                            {subQ.explanation && (
+                              <div className="p-4 rounded-xl bg-success/[0.03] border border-success/15 flex items-start gap-2.5">
+                                <Lightbulb size={15} className="text-success mt-0.5" />
+                                <div className="flex-1 min-w-0">
+                                  <h5 className="text-[10px] font-bold text-success-dark uppercase tracking-wider mb-0.5">Explanation</h5>
+                                  {renderFormattedText(subQ.explanation, "text-xs text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap text-left")}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Key Concepts */}
+                            {subQ.keyConcept && (
+                              <div className="p-4 rounded-xl bg-biochem/[0.03] border border-biochem/15 flex items-start gap-2.5">
+                                <Bookmark size={15} className="text-biochem mt-0.5" />
+                                <div className="flex-1 min-w-0">
+                                  <h5 className="text-[10px] font-bold text-biochem-dark uppercase tracking-wider mb-0.5">Key Concept</h5>
+                                  {renderFormattedText(subQ.keyConcept, "text-xs text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap text-left")}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* FEEDBACK */}
             {answered && (
               <div key={`fb-${currentIdx}`} className="feedback-animate mt-6 space-y-4">
-                {isCorrect ? (
+                {(current.type === 'mcq' || current.type === 'truefalse') && (
+                  isCorrect ? (
+                    <div className="rounded-3xl bg-success/[0.04] border border-success/15 px-7 py-5 flex items-start gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-success/10 flex items-center justify-center mt-0.5">
+                        <Check size={20} className="text-success" />
+                      </div>
+                      <div>
+                        <h4 className="font-archivo text-sm font-bold text-success-dark mb-1">Correct Answer!</h4>
+                        <p className="text-sm text-success-dark/70 leading-relaxed">
+                          Well done — you selected the right answer.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-3xl bg-danger/[0.04] border border-danger/15 px-7 py-5 flex items-start gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-danger/10 flex items-center justify-center mt-0.5">
+                        <AlertCircle size={20} className="text-danger" />
+                      </div>
+                      <div>
+                        <h4 className="font-archivo text-sm font-bold text-danger-dark mb-1">Incorrect Answer</h4>
+                        <p className="text-sm text-danger-dark/70 leading-relaxed">
+                          You selected <strong>{current.options?.[selectedIdx]}</strong> — the correct answer is{' '}
+                          <strong>{current.options?.[current.correctIndex ?? 0]}</strong>.
+                        </p>
+                      </div>
+                    </div>
+                  )
+                )}
+
+                {current.type === 'matching' && (
+                  isCorrect ? (
+                    <div className="rounded-3xl bg-success/[0.04] border border-success/15 px-7 py-5 flex items-start gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-success/10 flex items-center justify-center mt-0.5">
+                        <Check size={20} className="text-success" />
+                      </div>
+                      <div>
+                        <h4 className="font-archivo text-sm font-bold text-success-dark mb-1">All Pairs Matched!</h4>
+                        <p className="text-sm text-success-dark/70 leading-relaxed">
+                          Great job — all premises have been matched to their correct targets.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-3xl bg-danger/[0.04] border border-danger/15 px-7 py-5 flex items-start gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-danger/10 flex items-center justify-center mt-0.5">
+                        <AlertCircle size={20} className="text-danger" />
+                      </div>
+                      <div>
+                        <h4 className="font-archivo text-sm font-bold text-danger-dark mb-1">Some Pairs Incorrect</h4>
+                        <p className="text-sm text-danger-dark/70 leading-relaxed">
+                          One or more matches are incorrect. Review the correct pairings highlighted above.
+                        </p>
+                      </div>
+                    </div>
+                  )
+                )}
+
+                {current.type === 'essay' && (
+                  isCorrect ? (
+                    <div className="rounded-3xl bg-success/[0.04] border border-success/15 px-7 py-5 flex items-start gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-success/10 flex items-center justify-center mt-0.5">
+                        <Check size={20} className="text-success" />
+                      </div>
+                      <div>
+                        <h4 className="font-archivo text-sm font-bold text-success-dark mb-1">Self-Assessment: Correct</h4>
+                        <p className="text-sm text-success-dark/70 leading-relaxed">
+                          You marked your draft answer as matching the key concepts.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-3xl bg-danger/[0.04] border border-danger/15 px-7 py-5 flex items-start gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-danger/10 flex items-center justify-center mt-0.5">
+                        <AlertCircle size={20} className="text-danger" />
+                      </div>
+                      <div>
+                        <h4 className="font-archivo text-sm font-bold text-danger-dark mb-1">Self-Assessment: Needs Review</h4>
+                        <p className="text-sm text-danger-dark/70 leading-relaxed">
+                          You marked your draft answer as needing more study.
+                        </p>
+                      </div>
+                    </div>
+                  )
+                )}
+
+                {current.type === 'case' && (
+                  isCorrect ? (
+                    <div className="rounded-3xl bg-success/[0.04] border border-success/15 px-7 py-5 flex items-start gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-success/10 flex items-center justify-center mt-0.5">
+                        <Check size={20} className="text-success" />
+                      </div>
+                      <div>
+                        <h4 className="font-archivo text-sm font-bold text-success-dark mb-1">Case Completed!</h4>
+                        <p className="text-sm text-success-dark/70 leading-relaxed">
+                          Great job — you answered all parts of this clinical case study correctly.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-3xl bg-danger/[0.04] border border-danger/15 px-7 py-5 flex items-start gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-danger/10 flex items-center justify-center mt-0.5">
+                        <AlertCircle size={20} className="text-danger" />
+                      </div>
+                      <div>
+                        <h4 className="font-archivo text-sm font-bold text-danger-dark mb-1">Case Completed with Review</h4>
+                        <p className="text-sm text-danger-dark/70 leading-relaxed">
+                          You completed the case. Review any incorrect parts highlighted above.
+                        </p>
+                      </div>
+                    </div>
+                  )
+                )}
+
+                {current.explanation && (
                   <div className="rounded-3xl bg-success/[0.04] border border-success/15 px-7 py-5 flex items-start gap-4">
                     <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-success/10 flex items-center justify-center mt-0.5">
-                      <Check size={20} className="text-success" />
+                      <Lightbulb size={20} className="text-success" />
                     </div>
-                    <div>
-                      <h4 className="font-archivo text-sm font-bold text-success-dark mb-1">Correct Answer!</h4>
-                      <p className="text-sm text-success-dark/70 leading-relaxed">
-                        Well done — you selected the right answer.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-3xl bg-danger/[0.04] border border-danger/15 px-7 py-5 flex items-start gap-4">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-danger/10 flex items-center justify-center mt-0.5">
-                      <AlertCircle size={20} className="text-danger" />
-                    </div>
-                    <div>
-                      <h4 className="font-archivo text-sm font-bold text-danger-dark mb-1">Incorrect Answer</h4>
-                      <p className="text-sm text-danger-dark/70 leading-relaxed">
-                        You selected <strong>{current.options[selectedIdx]}</strong> — the correct answer is{' '}
-                        <strong>{current.options[current.correctIndex]}</strong>.
-                      </p>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-archivo text-sm font-bold text-success-dark mb-1">
+                        {current.type === 'mcq' || current.type === 'truefalse'
+                          ? `Correct Answer: ${current.options?.[current.correctIndex ?? 0]}`
+                          : 'Explanation'}
+                      </h4>
+                      {renderFormattedText(current.explanation, "text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap text-left")}
                     </div>
                   </div>
                 )}
-
-                <div className="rounded-3xl bg-success/[0.04] border border-success/15 px-7 py-5 flex items-start gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-success/10 flex items-center justify-center mt-0.5">
-                    <Lightbulb size={20} className="text-success" />
-                  </div>
-                  <div>
-                    <h4 className="font-archivo text-sm font-bold text-success-dark mb-1">
-                      Correct Answer: {current.options[current.correctIndex]}
-                    </h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{current.explanation}</p>
-                  </div>
-                </div>
 
                 {current.keyConcept && (
                   <div className="rounded-3xl bg-biochem/[0.04] border border-biochem/15 px-7 py-5 flex items-start gap-4">
                     <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-biochem/10 flex items-center justify-center mt-0.5">
                       <Bookmark size={20} className="text-biochem" />
                     </div>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <h4 className="font-archivo text-sm font-bold text-biochem-dark mb-1">Key Concept</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{current.keyConcept}</p>
+                      {renderFormattedText(current.keyConcept, "text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap text-left")}
                     </div>
                   </div>
                 )}
@@ -421,10 +1243,11 @@ export function QuizInterface({ chapter, subject, questions, onBack, onFinish }:
                   <div className="hidden lg:flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
                     {showLeftEllipsis && <span className="text-gray-300 dark:text-gray-600 text-xs font-bold px-0.5">…</span>}
                     {visibleIdxs.map((idx) => {
+                      const q = questions[idx];
                       const ans = answers[idx];
                       const isCurrent = idx === currentIdx;
-                      const isAns = ans !== undefined;
-                      const wasCorrect = isAns && questions[idx].correctIndex === ans;
+                      const isCompleted = ans !== undefined && isQuestionCompleted(q, ans);
+                      const wasCorrect = isCompleted && checkAnswerCorrect(q, ans, idx);
                       const isFlagged = flagged.has(idx);
                       return (
                         <button
@@ -435,7 +1258,7 @@ export function QuizInterface({ chapter, subject, questions, onBack, onFinish }:
                               ? 'w-3.5 h-3.5 bg-gray-900 dark:bg-white ring-4 ring-gray-900/10 dark:ring-white/10'
                               : isFlagged
                               ? 'w-2.5 h-2.5 bg-amber-400'
-                              : isAns
+                              : isCompleted
                               ? `w-2.5 h-2.5 ${wasCorrect ? 'bg-success' : 'bg-danger'}`
                               : 'w-2.5 h-2.5 bg-gray-200 dark:bg-gray-700'
                           }`}
@@ -470,8 +1293,8 @@ export function QuizInterface({ chapter, subject, questions, onBack, onFinish }:
           </div>
 
           {/* RIGHT SIDEBAR */}
-          <div className="hidden xl:block w-72 flex-shrink-0">
-            <div className="sticky top-24 space-y-5">
+          <div className="w-full xl:w-72 flex-shrink-0">
+            <div className="xl:sticky xl:top-24 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-5">
 
               {/* Score tracker */}
               <div className="sidebar-card bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
@@ -509,7 +1332,7 @@ export function QuizInterface({ chapter, subject, questions, onBack, onFinish }:
                   {[
                     { label: 'Correct', value: correctCount, color: 'bg-success', textColor: 'text-success' },
                     { label: 'Incorrect', value: answeredCount - correctCount, color: 'bg-danger', textColor: 'text-danger' },
-                    { label: 'Remaining', value: questions.length - answeredCount, color: 'bg-gray-300 dark:bg-gray-600', textColor: 'text-gray-400 dark:text-gray-500' },
+                    { label: 'Remaining', value: totalPoints - answeredCount, color: 'bg-gray-300 dark:bg-gray-600', textColor: 'text-gray-400 dark:text-gray-500' },
                   ].map((row) => (
                     <div key={row.label} className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1.5">
@@ -533,15 +1356,15 @@ export function QuizInterface({ chapter, subject, questions, onBack, onFinish }:
                   {questions.map((q, idx) => {
                     const ans = answers[idx];
                     const isCurrent = idx === currentIdx;
-                    const isAns = ans !== undefined;
-                    const wasCorrect = isAns && q.correctIndex === ans;
+                    const isCompleted = ans !== undefined && isQuestionCompleted(q, ans);
+                    const wasCorrect = isCompleted && checkAnswerCorrect(q, ans, idx);
                     const isFlagged = flagged.has(idx);
 
                     let cls = 'w-full aspect-square rounded-xl flex items-center justify-center text-xs font-bold cursor-pointer transition-all border-2 ';
                     if (isCurrent) cls += 'bg-gray-900 dark:bg-white border-gray-900 dark:border-white text-white dark:text-gray-900 ring-4 ring-gray-900/10 dark:ring-white/10';
                     else if (isFlagged) cls += 'bg-amber-50 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400';
                     else if (wasCorrect) cls += 'bg-success/10 border-success/30 text-success';
-                    else if (isAns) cls += 'bg-danger/10 border-danger/30 text-danger';
+                    else if (isCompleted) cls += 'bg-danger/10 border-danger/30 text-danger';
                     else cls += 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-300 dark:text-gray-600';
 
                     return (
@@ -568,7 +1391,7 @@ export function QuizInterface({ chapter, subject, questions, onBack, onFinish }:
               </div>
 
               {/* Subject info */}
-              <div className={`sidebar-card bg-gradient-to-br ${s.bgOp5} to-clinical/5 rounded-3xl p-5 ${s.borderOp10} border`}>
+              <div className={`sidebar-card bg-gradient-to-br ${s.bgOp5} to-clinical/5 rounded-3xl p-5 ${s.borderOp10} border md:col-span-2 xl:col-span-1`}>
                 <div className="flex items-center gap-3 mb-3">
                   <div className={`w-10 h-10 rounded-xl ${s.bgOp15} flex items-center justify-center`}>
                     <Activity size={18} className={s.text} />
@@ -589,11 +1412,91 @@ export function QuizInterface({ chapter, subject, questions, onBack, onFinish }:
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-10 pb-8">
-        <p className="text-center text-[11px] text-gray-300 dark:text-gray-600 font-medium">
+      <div className="max-w-7xl mx-auto px-6 lg:px-10 pb-8 text-center space-y-1.5">
+        <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
           Endocrine Module Quiz • Chapter {chapter.id}: {chapter.title} • {subject ? subject.name : 'All Subjects'}
         </p>
+        <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium">
+          For inquiries or to report errors, please contact:{' '}
+          <a href="mailto:omarhmaged@gmail.com" className="hover:text-gray-900 dark:hover:text-white transition-colors underline font-semibold">
+            omarhmaged@gmail.com
+          </a>
+        </p>
       </div>
+      {/* KEYBOARD SHORTCUTS HELPER MODAL */}
+      {showKeyboardHelper && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-gray-900/40 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-900 rounded-[30px] border border-gray-100 dark:border-gray-800 max-w-md w-full p-8 shadow-2xl relative overflow-hidden feedback-animate">
+            <button
+              onClick={() => setShowKeyboardHelper(false)}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors"
+            >
+              <X size={16} />
+            </button>
+
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-physiology/10 flex items-center justify-center text-physiology">
+                <Keyboard size={20} />
+              </div>
+              <h3 className="font-archivo text-lg font-bold text-gray-900 dark:text-white">Keyboard Shortcuts</h3>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                { keys: ['A', 'B', 'C', 'D'], desc: 'Select Option A, B, C, or D' },
+                { keys: ['F'], desc: 'Flag / Unflag Question' },
+                { keys: ['←', '→'], desc: 'Navigate to Previous / Next Question' },
+                { keys: ['Enter'], desc: 'Advance to Next Question / Finish Quiz' },
+                { keys: ['Esc'], desc: 'Close this shortcuts window' }
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between py-2.5 border-b border-gray-100 dark:border-gray-800/60 last:border-b-0">
+                  <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 text-left">{item.desc}</span>
+                  <div className="flex gap-1 flex-shrink-0">
+                    {item.keys.map((k) => (
+                      <kbd key={k} className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-850 border border-gray-200 dark:border-gray-750 font-mono text-xs font-bold text-gray-800 dark:text-gray-200 shadow-sm">
+                        {k}
+                      </kbd>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setShowKeyboardHelper(false)}
+              className="mt-6 w-full py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-2xl text-xs hover:scale-[0.98] transition-transform"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface TimerProps {
+  onTick: (seconds: number) => void;
+}
+
+function QuizTimer({ onTick }: TimerProps) {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setSeconds((s) => {
+        const next = s + 1;
+        onTick(next);
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, [onTick]);
+
+  return (
+    <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+      <Clock size={14} className="text-gray-400 dark:text-gray-500" />
+      <span className="text-sm font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{formatTime(seconds)}</span>
     </div>
   );
 }

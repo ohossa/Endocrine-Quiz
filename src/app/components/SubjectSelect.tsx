@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   ArrowLeft,
   ChevronRight,
@@ -38,8 +39,8 @@ const totalQs = (subjects: SubjectData[]) =>
   subjects.reduce((a, s) => a + s.questions.length, 0);
 
 export function SubjectSelect({ chapter, onBack, onSelectSubject, onQuickStart }: Props) {
-  const allQuestions = shuffleArray(chapter.subjects.flatMap((s) => s.questions));
-  const totalQuestions = totalQs(chapter.subjects);
+  const allQuestions = useMemo(() => chapter.subjects.flatMap((s) => s.questions), [chapter]);
+  const totalQuestions = useMemo(() => totalQs(chapter.subjects), [chapter.subjects]);
 
   return (
     <div className="min-h-screen bg-gray-50/80 dark:bg-gray-950 font-manrope">
@@ -258,9 +259,15 @@ export function SubjectSelect({ chapter, onBack, onSelectSubject, onQuickStart }
           </button>
         </div>
 
-        <div className="mt-10 pb-8 text-center">
-          <p className="text-xs text-gray-300 dark:text-gray-600 font-medium">
+        <div className="mt-10 pb-8 text-center space-y-1.5">
+          <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
             Endocrine Module Quiz • Chapter {chapter.id}: {chapter.title} • 2nd Year Medical Students
+          </p>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium">
+            For inquiries or to report errors, please contact:{' '}
+            <a href="mailto:omarhmaged@gmail.com" className="hover:text-gray-900 dark:hover:text-white transition-colors underline font-semibold">
+              omarhmaged@gmail.com
+            </a>
           </p>
         </div>
       </div>
