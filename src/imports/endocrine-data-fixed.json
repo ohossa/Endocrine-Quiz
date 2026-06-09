@@ -4422,97 +4422,241 @@
             {
               "id": 366,
               "question": "Hashimoto's thyroiditis is an example of organ-specific autoimmune disease. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "True"
             },
             {
               "id": 367,
               "question": "Goitre is always associated with high level of thyroxin. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "False"
             },
             {
               "id": 368,
               "question": "Goitre is always nodular. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "False"
             },
             {
               "id": 369,
               "question": "Hypothyroidism leads to cretinism or myxoedema depending on the patient's age. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "True"
             },
             {
               "id": 370,
               "question": "Thyroid adenoma usually appears as a solitary thyroid nodule. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "True"
             },
             {
               "id": 371,
               "question": "Thyroid adenoma is classified into several types according to their malignant potential. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "False"
             },
             {
               "id": 372,
               "question": "There is no benign papillary thyroid tumour. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "False"
             },
             {
               "id": 373,
               "question": "Papillary carcinoma of thyroid is characterised by hyperchromatic nuclei with prominent nucleoli. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "False"
             },
             {
               "id": 374,
               "question": "Psammoma bodies are characteristic of papillary carcinoma of thyroid. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "True"
             },
             {
               "id": 375,
               "question": "Papillary carcinoma of thyroid spreads early by blood. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "False"
             },
             {
               "id": 376,
               "question": "Follicular carcinoma is differentiated from follicular adenoma by the high degree of nuclear atypia and mitosis. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "False"
             },
             {
               "id": 377,
               "question": "Follicular carcinoma of thyroid is a neuroendocrine tumour. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "False"
             },
             {
               "id": 378,
               "question": "NOT all thyroid tumours arise from thyroid follicles. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "True"
             },
             {
               "id": 379,
               "question": "Medullary carcinoma of thyroid secretes calcitonin. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "True"
             },
             {
               "id": 380,
               "question": "Thyroglossal duct cyst is a congenital anomaly seen on the lateral side of the neck. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "False"
             },
             {
               "id": 381,
               "question": "Hyperplasia of the parathyroid gland affects all 4 glands, while adenoma affects one gland only. (T/F)★★",
-              "options": [],
+              "options": [
+  {
+    "text": "True",
+    "value": true
+  },
+  {
+    "text": "False",
+    "value": false
+  }
+],
               "correctAnswer": "True"
             },
             {
