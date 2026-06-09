@@ -1,7 +1,7 @@
 import { ChapterData, Question, SubjectColor, SubjectData } from './types';
 import rawData from '../imports/endocrine-data-fixed.json';
 
-// ── Raw JSON types ─────────────────────────────────────────────────────────────
+// ── Raw JSON types ─────────────────────────────────────────────────────────
 
 type RawQuestion = {
   id: number;
@@ -20,7 +20,7 @@ type RawChapter = {
   topics: RawTopic[];
 };
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────
 
 function letterToIndex(letter: string): number {
   return letter.toUpperCase().charCodeAt(0) - 65; // A→0, B→1, …
@@ -70,10 +70,17 @@ const SUBJECT_ORDER: SubjectColor[] = [
 
 function transformQuestion(q: RawQuestion, color: SubjectColor): Question {
   const idx = letterToIndex(q.correctAnswer);
+  
+  // More robust true/false detection - check if exactly 2 options and they contain true/false or yes/no variations
+  const opt0Lower = q.options[0]?.toLowerCase().trim() ?? '';
+  const opt1Lower = q.options[1]?.toLowerCase().trim() ?? '';
+  
   const isTrueFalse =
     q.options.length === 2 &&
-    q.options[0].toLowerCase().startsWith('true') &&
-    q.options[1].toLowerCase().startsWith('false');
+    ((opt0Lower === 'true' || opt0Lower.startsWith('true')) && (opt1Lower === 'false' || opt1Lower.startsWith('false'))) ||
+    ((opt0Lower === 'yes' || opt0Lower.startsWith('yes')) && (opt1Lower === 'no' || opt1Lower.startsWith('no'))) ||
+    ((opt0Lower === 'correct' || opt0Lower.startsWith('correct')) && (opt1Lower === 'incorrect' || opt1Lower.startsWith('incorrect')));
+
   return {
     id: q.id,
     type: isTrueFalse ? 'truefalse' : 'mcq',
@@ -86,7 +93,7 @@ function transformQuestion(q: RawQuestion, color: SubjectColor): Question {
   };
 }
 
-// ── Chapter metadata ───────────────────────────────────────────────────────────
+// ── Chapter metadata ────────────────────────────────────────────────────────
 
 const CHAPTER_META = [
   {
@@ -131,7 +138,7 @@ const CHAPTER_META = [
   },
 ];
 
-// ── Builder ────────────────────────────────────────────────────────────────────
+// ── Builder ───────────────────────────────────────────────────────────
 
 function buildChapter(
   raw: RawChapter,
@@ -171,7 +178,7 @@ function buildChapter(
   };
 }
 
-// ── Exports ────────────────────────────────────────────────────────────────────
+// ── Exports ───────────────────────────────────────────────────────────
 
 export const chapters: ChapterData[] = (
   rawData.chapters as RawChapter[]
