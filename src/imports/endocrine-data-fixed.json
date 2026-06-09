@@ -4710,7 +4710,7 @@
           "questions": [
             {
               "id": 386,
-              "question": "A 23-year-old female patient presented with excess anxiety, tachycardia, and weight loss despite good appetite and was diagnosed with hyperthyroidism. She started an oral antithyroid drug (Drug A) for long-term use, acting by inhibiting thyroid hormone synthesis without affecting peripheral T4, along with a beta blocker. Two years after improvement, she came and asked for medical advice as she became pregnant in the early trimester. The physician changed the antithyroid drug to another one (Drug B) and said that Drug A will be reused 3 months later. Drug A (long-term) is:",
+              "question": "A 23-year-old female patient presented with excess anxiety, tachycardia, and weight loss despite good appetite and was diagnosed with hyperthyroidism. She started an oral antithyroid drug (Drug A) for long-term use, acting by inhibiting thyroid hormone synthesis without affecting peripheral T4, along with a beta blocker. Two years after improvement, she came and asked for medical advice as she became pregnant in the early trimester. The physician changed the antithyroid drug to another one (Drug B) and said that Drug A will be reused 3 months later. Drug A is?",
               "options": [
                 "Propylthiouracil",
                 "Methimazole",
@@ -4722,31 +4722,30 @@
             },
             {
               "id": 387,
-              "question": "A 23-year-old female patient presented with excess anxiety, tachycardia, and weight loss despite good appetite and was diagnosed with hyperthyroidism. She started an oral antithyroid drug (Drug A) for long-term use, acting by inhibiting thyroid hormone synthesis without affecting peripheral T4, along with a beta blocker. Two years after improvement, she came and asked for medical advice as she became pregnant in the early trimester. The physician changed the antithyroid drug to another one (Drug B) and said that Drug A will be reused 3 months later. Based on the clinical scenario, select the appropriate answer for the next consideration:",
+              "question": "Adverse effects of drug A: ",
               "options": [
-                "Propylthiouracil",
-                "Methimazole",
-                "Radioactive iodine",
-                "Iodine",
-                "Lithium"
+                "Agranulocytosis",
+                "Thyroid storm",
+                "Hepatotoxicity",
+                "A and C",
+                "All of the above"
               ],
               "correctAnswer": "D"
             },
             {
               "id": 388,
-              "question": "A 23-year-old female patient presented with excess anxiety, tachycardia, and weight loss despite good appetite and was diagnosed with hyperthyroidism. She started an oral antithyroid drug (Drug A) for long-term use, acting by inhibiting thyroid hormone synthesis without affecting peripheral T4, along with a beta blocker. Two years after improvement, she came and asked for medical advice as she became pregnant in the early trimester. The physician changed the antithyroid drug to another one (Drug B) and said that Drug A will be reused 3 months later. Based on the clinical scenario, select the appropriate answer for the next consideration:",
+              "question": "Propranolol in hyperthyroidism:",
               "options": [
-                "Propylthiouracil",
-                "Methimazole",
-                "Radioactive iodine",
-                "Iodine",
-                "Lithium"
+                "Decrease peripheral conversion of T4 into T3",
+                "Decrease synthesis of thyroid hormones",
+                "Decrease cardiovascular manifestations of thyroid hormone",
+                "A and C",
               ],
               "correctAnswer": "D"
             },
             {
               "id": 389,
-              "question": "A 23-year-old female patient presented with excess anxiety, tachycardia, and weight loss despite good appetite and was diagnosed with hyperthyroidism. She started an oral antithyroid drug (Drug A) for long-term use, acting by inhibiting thyroid hormone synthesis without affecting peripheral T4, along with a beta blocker. Two years after improvement, she came and asked for medical advice as she became pregnant in the early trimester. The physician changed the antithyroid drug to another one (Drug B) and said that Drug A will be reused 3 months later. Based on the clinical scenario, select the appropriate answer for the next consideration:",
+              "question": "A 23-year-old female patient presented with excess anxiety, tachycardia, and weight loss despite good appetite and was diagnosed with hyperthyroidism. She started an oral antithyroid drug (Drug A) for long-term use, acting by inhibiting thyroid hormone synthesis without affecting peripheral T4, along with a beta blocker. Two years after improvement, she came and asked for medical advice as she became pregnant in the early trimester. The physician changed the antithyroid drug to another one (Drug B) and said that Drug A will be reused 3 months later. Based on the clinical scenario, What is Drug B?",
               "options": [
                 "Propylthiouracil",
                 "Methimazole",
@@ -4758,37 +4757,35 @@
             },
             {
               "id": 390,
-              "question": "A 23-year-old female patient presented with excess anxiety, tachycardia, and weight loss despite good appetite and was diagnosed with hyperthyroidism. She started an oral antithyroid drug (Drug A) for long-term use, acting by inhibiting thyroid hormone synthesis without affecting peripheral T4, along with a beta blocker. Two years after improvement, she came and asked for medical advice as she became pregnant in the early trimester. The physician changed the antithyroid drug to another one (Drug B) and said that Drug A will be reused 3 months later. Based on the clinical scenario, select the appropriate answer for the next consideration:",
+              "question": "Risk of drug A in early pregnancy:",
               "options": [
-                "Propylthiouracil",
-                "Methimazole",
-                "Radioactive iodine",
-                "Iodine",
-                "Lithium"
+                "Foetal goiter",
+                "Cardiac anomalies",
+                "Premature death (ouch)",
+                "Hepatotoxicity (bad)",
               ],
               "correctAnswer": "B"
             },
             {
               "id": 391,
-              "question": "A 23-year-old female patient presented with excess anxiety, tachycardia, and weight loss despite good appetite and was diagnosed with hyperthyroidism. She started an oral antithyroid drug (Drug A) for long-term use, acting by inhibiting thyroid hormone synthesis without affecting peripheral T4, along with a beta blocker. Two years after improvement, she came and asked for medical advice as she became pregnant in the early trimester. The physician changed the antithyroid drug to another one (Drug B) and said that Drug A will be reused 3 months later. Based on the clinical scenario, select the appropriate answer for the next consideration:",
+              "question": "Drug A resumed after 1st trimester because drug B has high risk of:",
               "options": [
-                "Propylthiouracil",
-                "Methimazole",
-                "Radioactive iodine",
-                "Iodine",
-                "Lithium"
+                "Foetal goiter",
+                "Cardiac anomalies",
+                "Hepatotoxicity",
+                "Nephrotoxicity",
               ],
               "correctAnswer": "C"
             },
             {
               "id": 392,
-              "question": "A 23-year-old female patient presented with excess anxiety, tachycardia, and weight loss despite good appetite and was diagnosed with hyperthyroidism. She started an oral antithyroid drug (Drug A) for long-term use, acting by inhibiting thyroid hormone synthesis without affecting peripheral T4, along with a beta blocker. Two years after improvement, she came and asked for medical advice as she became pregnant in the early trimester. The physician changed the antithyroid drug to another one (Drug B) and said that Drug A will be reused 3 months later. Based on the clinical scenario, select the appropriate answer for the next consideration:",
+              "question": "True about radioactive iodine:",
               "options": [
-                "Propylthiouracil",
-                "Methimazole",
-                "Radioactive iodine",
-                "Iodine",
-                "Lithium"
+                "CL in pregnancy",
+                "Iodine should be used for 3 weeks before it",
+                "Methimazole contraindicated before it",
+                "In full therapeutic dose it should be used annually",
+                "The patient should be isolated for 3 weeks"
               ],
               "correctAnswer": "A"
             },
