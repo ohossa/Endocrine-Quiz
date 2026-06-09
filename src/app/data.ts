@@ -3,11 +3,16 @@ import rawData from '../imports/endocrine-data-fixed.json';
 
 // ── Raw JSON types ─────────────────────────────────────────────────────────
 
+type RawQuestionOption = {
+  text: string;
+  value: boolean;
+} | string;
+
 type RawQuestion = {
   id: number;
   question: string;
-  options: string[];
-  correctAnswer: string;
+  options: RawQuestionOption[];
+  correctAnswer: string | boolean;
 };
 
 type RawTopic = {
@@ -69,17 +74,34 @@ const SUBJECT_ORDER: SubjectColor[] = [
 ];
 
 function transformQuestion(q: RawQuestion, color: SubjectColor): Question {
-  const idx = letterToIndex(q.correctAnswer);
-  
-  // More robust true/false detection - check if exactly 2 options and they contain true/false or yes/no variations
-  const opt0Lower = q.options[0]?.toLowerCase().trim() ?? '';
-  const opt1Lower = q.options[1]?.toLowerCase().trim() ?? '';
+  // Extract option texts - handle both old string format and new object format
+  const optionTexts = q.options.map(opt => {
+    if (typeof opt === 'string') {
+      return opt;
+    }
+    return opt.text;
+  });
+
+  // Detect if this is a true/false question
+  const opt0Lower = optionTexts[0]?.toLowerCase().trim() ?? '';
+  const opt1Lower = optionTexts[1]?.toLowerCase().trim() ?? '';
   
   const isTrueFalse =
-    q.options.length === 2 &&
-    ((opt0Lower === 'true' || opt0Lower.startsWith('true')) && (opt1Lower === 'false' || opt1Lower.startsWith('false'))) ||
+    optionTexts.length === 2 &&
+    (((opt0Lower === 'true' || opt0Lower.startsWith('true')) && (opt1Lower === 'false' || opt1Lower.startsWith('false'))) ||
     ((opt0Lower === 'yes' || opt0Lower.startsWith('yes')) && (opt1Lower === 'no' || opt1Lower.startsWith('no'))) ||
-    ((opt0Lower === 'correct' || opt0Lower.startsWith('correct')) && (opt1Lower === 'incorrect' || opt1Lower.startsWith('incorrect')));
+    ((opt0Lower === 'correct' || opt0Lower.startsWith('correct')) && (opt1Lower === 'incorrect' || opt1Lower.startsWith('incorrect'))));
+
+  // Determine correct index based on correctAnswer format
+  let correctIndex = 0;
+  if (typeof q.correctAnswer === 'boolean') {
+    // New format: boolean value
+    correctIndex = q.correctAnswer ? 0 : 1; // true → index 0, false → index 1
+  } else {
+    // Old format: letter string (A, B, C, etc.)
+    const idx = letterToIndex(q.correctAnswer);
+    correctIndex = idx >= 0 && idx < optionTexts.length ? idx : 0;
+  }
 
   return {
     id: q.id,
@@ -87,8 +109,8 @@ function transformQuestion(q: RawQuestion, color: SubjectColor): Question {
     text: q.question,
     lecture: 1,
     subjectColor: color,
-    options: q.options,
-    correctIndex: idx >= 0 && idx < q.options.length ? idx : 0,
+    options: optionTexts,
+    correctIndex,
     explanation: '',
   };
 }
