@@ -2321,17 +2321,35 @@
               "correctAnswer": "A"
             },
             {
-              "id": 193,
-              "question": "Pituitary adenomas may have no hormonal effects. (True/False)",
-              "options": [],
-              "correctAnswer": "True"
-            },
-            {
-              "id": 194,
-              "question": "Hyperpituitarism may lead to gigantism or acromegaly depending on the level of growth hormone. (True/False)",
-              "options": [],
-              "correctAnswer": "False"
-            },
+     "id": 193,
+    "question": "Pituitary adenomas may have no hormonal effects.",
+    "options": [
+      {
+        "text": "True",
+        "value": true
+      },
+      {
+        "text": "False",
+        "value": false
+      }
+    ],
+    "correctAnswer": true
+  },
+  {
+    "id": 194,
+    "question": "Hyperpituitarism may lead to gigantism or acromegaly depending on the level of growth hormone.",
+    "options": [
+      {
+        "text": "True",
+        "value": true
+      },
+      {
+        "text": "False",
+        "value": false
+      }
+    ],
+    "correctAnswer": false
+  },
             {
               "id": 195,
               "question": "A 49-year-old man who smokes two packs of cigarettes a day presents with a lung mass on x-ray and recent weight gain. Laboratory examination reveals hyponatremia with hyperosmolar urine. Which of the following is the most likely cause of these clinical findings?",
