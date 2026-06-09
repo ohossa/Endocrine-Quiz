@@ -5262,46 +5262,40 @@
             },
             {
               "id": 382,
-              "type": "essay",
+              "type": "matching",
               "question": "Match:",
-              "options": [
-                "Papillary carcinoma of thyroid – Psammoma bodies",
-                "Follicular carcinoma of thyroid – Capsular invasion",
-                "Medullary carcinoma of thyroid – Amyloid",
-                "Anaplastic carcinoma of thyroid – (no match)",
-                "Neuroblastoma – Homer-Wright rosettes"
+              "pairs": [
+                {"premise": "Papillary carcinoma of thyroid", "target": "Psammoma bodies"},
+                {"premise": "Follicular carcinoma of thyroid", "target": "Capsular invasion"},
+                {"premise": "Medullary carcinoma of thyroid", "target": "Amyloid"},
+                {"premise": "Anaplastic carcinoma of thyroid", "target": "(no match)"},
+                {"premise": "Neuroblastoma", "target": "Homer-Wright rosettes"}
               ],
-              "correctAnswer": "",
-              "modelAnswer": "Papillary → Psammoma bodies; Follicular → Capsular invasion; Medullary → Amyloid; Anaplastic → no specific; Neuroblastoma → Homer-Wright rosettes",
               "explanation": "Classic associations."
             },
             {
               "id": 383,
-              "type": "essay",
+              "type": "matching",
               "question": "Match:",
-              "options": [
-                "Ganglioneuroma – Always benign",
-                "Neuroblastoma – Always malignant",
-                "Pheochromocytoma – May be benign or malignant",
-                "Pituitary adenoma – May be locally invasive"
+              "pairs": [
+                {"premise": "Ganglioneuroma", "target": "Always benign"},
+                {"premise": "Neuroblastoma", "target": "Always malignant"},
+                {"premise": "Pheochromocytoma", "target": "May be benign or malignant"},
+                {"premise": "Pituitary adenoma", "target": "May be locally invasive"}
               ],
-              "correctAnswer": "",
-              "modelAnswer": "Ganglioneuroma benign; Neuroblastoma malignant; Pheochromocytoma variable; Pituitary adenoma may be invasive.",
               "explanation": "Tumor behavior."
             },
             {
               "id": 384,
-              "type": "essay",
+              "type": "matching",
               "question": "Match:",
-              "options": [
-                "Neuroblastoma – Sympathetic ganglia",
-                "Pheochromocytoma – Carotid body",
-                "Anaplastic carcinoma – Thyroid gland",
-                "Thymoma – Superior mediastinum"
+              "pairs": [
+                {"premise": "Neuroblastoma", "target": "Sympathetic ganglia"},
+                {"premise": "Pheochromocytoma", "target": "Carotid body"},
+                {"premise": "Anaplastic carcinoma", "target": "Thyroid gland"},
+                {"premise": "Thymoma", "target": "Superior mediastinum"}
               ],
-              "correctAnswer": "",
-              "modelAnswer": "Neuroblastoma from sympathetic ganglia; Pheochromocytoma from adrenal medulla (not carotid body); Anaplastic from thyroid; Thymoma from thymus.",
-              "explanation": "Origins of tumors."
+              "explanation": "Origins of tumors. Note: Pheochromocytoma arises from the adrenal medulla, whereas paraganglioma arises from extra-adrenal chromaffin tissue like the carotid body."
             }
           ]
         },
