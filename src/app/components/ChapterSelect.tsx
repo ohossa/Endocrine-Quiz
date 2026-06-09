@@ -177,7 +177,7 @@ export function ChapterSelect({ onSelectChapter }: Props) {
                 2nd Year Ain Shams University <GraduationCap size={14} />
               </div>
               <h1 className="header-anim font-archivo text-5xl lg:text-6xl font-black tracking-tight leading-none mb-3">
-                <span className="gradient-title">Endocrine Module</span>
+                <span className="gradient-title">Endocrine MCQ</span>
               </h1>
               <p className="header-sub text-gray-500 dark:text-gray-400 text-lg font-medium max-w-lg leading-relaxed">
                 Master the endocrine system through structured, chapter-based assessments.
