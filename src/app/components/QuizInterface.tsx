@@ -1453,7 +1453,7 @@ export function QuizInterface({ chapter, subject, questions, onBack, onFinish }:
                   <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 text-left">{item.desc}</span>
                   <div className="flex gap-1 flex-shrink-0">
                     {item.keys.map((k) => (
-                      <kbd key={k} className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-850 border border-gray-200 dark:border-gray-750 font-mono text-xs font-bold text-gray-800 dark:text-gray-200 shadow-sm">
+                      <kbd key={k} className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 font-mono text-xs font-bold text-gray-800 dark:text-gray-200 shadow-sm">
                         {k}
                       </kbd>
                     ))}
@@ -1494,9 +1494,9 @@ function QuizTimer({ onTick }: TimerProps) {
   }, [onTick]);
 
   return (
-    <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+    <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
       <Clock size={14} className="text-gray-400 dark:text-gray-500" />
-      <span className="text-sm font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{formatTime(seconds)}</span>
+      <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 tabular-nums">{formatTime(seconds)}</span>
     </div>
   );
 }
