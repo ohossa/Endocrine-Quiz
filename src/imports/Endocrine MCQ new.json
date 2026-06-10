@@ -7802,8 +7802,8 @@
                 "Centrally located within the gland.",
                 "Have the largest granules among other cell populations."
               ],
-              "correctAnswer": "B",
-              "explanation": "Delta cells have granules similar to alpha cells (dense core with halo)."
+              "correctAnswer": "E",
+              "explanation": "Delta cells have large granules according to the book page 170."
             },
             {
               "id": 542,
@@ -7814,10 +7814,10 @@
                 "Granules with dense eccentric core surrounded by light area.",
                 "Granules with dense polyhedral crystalline core.",
                 "Centrally located within the gland.",
-                "Have the smallest granules among other cell populations."
+                "Have the larger granules among other cell populations."
               ],
               "correctAnswer": "E",
-              "explanation": "Delta cells have smaller granules than alpha and beta."
+              "explanation": "Delta cells have larger granules than alpha and beta."
             },
             {
               "id": 543,
@@ -8026,7 +8026,7 @@
                 "PP",
                 "D-1"
               ],
-              "correctAnswer": "C",
+              "correctAnswer": "E",
               "explanation": "EC cells secrete motilin and substance P, not glucagon-like. Possibly incorrect."
             },
             {
