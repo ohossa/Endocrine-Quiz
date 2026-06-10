@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { ChapterData, SubjectData, Question, Screen } from './types';
-import { shuffleArray } from './data';
+import { shuffleArray, chapters } from './data';
 import { ChapterSelect } from './components/ChapterSelect';
 import { SubjectSelect } from './components/SubjectSelect';
 import { QuizInterface } from './components/QuizInterface';
 import { ResultsDashboard } from './components/ResultsDashboard';
 import { ThemeProvider } from './context/ThemeContext';
-import { saveQuizResult } from './utils/storage';
+import { saveQuizResult, QuizResult } from './utils/storage';
 
 interface QuizPayload {
   chapter: ChapterData;
@@ -60,9 +60,24 @@ export default function App() {
     });
   };
 
-  const handleFinishQuiz = (answers: Record<number, number>, elapsedSeconds: number, flaggedQuestions: Set<number>) => {
+  const handleFinishQuiz = (answers: Record<number, any>, elapsedSeconds: number, flaggedQuestions: Set<number>) => {
     const questions = quizPayload!.questions;
-    const correct = questions.filter((q, i) => answers[i] === q.correctIndex).length;
+    const correct = questions.filter((q, i) => {
+      if (q.type === 'essay') {
+        return answers[i]?.selfGrade === 'correct';
+      }
+      if (q.type === 'matching') {
+        const student = answers[i]?.matches || {};
+        if (!q.pairs || Object.keys(student).length !== q.pairs.length) return false;
+        // Check if all matched targets are correct
+        return q.pairs.every((pair, pIdx) => {
+          const tIdx = student[pIdx];
+          const scrambled = answers[i]?.scrambled || [];
+          return scrambled[tIdx] === pair.target;
+        });
+      }
+      return answers[i] === q.correctIndex;
+    }).length;
     const total = questions.length;
     saveQuizResult({
       chapterId: quizPayload!.chapter.id,
@@ -72,9 +87,47 @@ export default function App() {
       total,
       pct: total > 0 ? Math.round((correct / total) * 100) : 0,
       elapsedSeconds,
+      questionIds: questions.map(q => q.id),
+      answers,
+      flaggedQuestionIds: Array.from(flaggedQuestions),
     });
     transitionTo(() => {
       setResultPayload({ chapter: quizPayload!.chapter, subject: quizPayload!.subject, questions, answers, elapsedSeconds, flaggedQuestions });
+      setScreen('results');
+    });
+  };
+
+  const handleSelectHistory = (result: QuizResult) => {
+    const chapter = chapters.find(c => c.id === result.chapterId);
+    if (!chapter) return;
+
+    const subject = chapter.subjects.find(s => s.name === result.subjectName) || null;
+
+    let questions: Question[] = [];
+    if (result.questionIds && result.questionIds.length > 0) {
+      questions = result.questionIds
+        .map(id => {
+          for (const ch of chapters) {
+            for (const sub of ch.subjects) {
+              const q = sub.questions.find(q => q.id === id);
+              if (q) return q;
+            }
+          }
+          return null;
+        })
+        .filter((q): q is Question => q !== null);
+    } else {
+      questions = subject ? subject.questions : chapter.subjects.flatMap(s => s.questions);
+      questions = questions.slice(0, result.total);
+    }
+
+    const answers = result.answers || {};
+    const flaggedQuestions = new Set<number>(result.flaggedQuestionIds || []);
+
+    transitionTo(() => {
+      setSelectedChapter(chapter);
+      setQuizPayload({ chapter, subject, questions });
+      setResultPayload({ chapter, subject, questions, answers, elapsedSeconds: result.elapsedSeconds, flaggedQuestions });
       setScreen('results');
     });
   };
@@ -98,7 +151,12 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      {screen === 'chapters' && <ChapterSelect onSelectChapter={handleSelectChapter} />}
+      {screen === 'chapters' && (
+        <ChapterSelect
+          onSelectChapter={handleSelectChapter}
+          onSelectHistory={handleSelectHistory}
+        />
+      )}
       {screen === 'subjects' && selectedChapter && (
         <SubjectSelect
           chapter={selectedChapter}
