@@ -2955,12 +2955,12 @@
               "options": [
                 "Gallstone disease",
                 "Hypothyroidism",
-                "Vitamin B12 deficiency",
+                "Vitamin B12 deficiency (also correct)",
                 "Hyperglycemia",
                 "Osteoporosis"
               ],
               "correctAnswer": "A",
-              "explanation": "Octreotide can cause biliary sludge and gallstones due to inhibition of gallbladder contraction."
+              "explanation": "Should be both A&C. Octreotide can cause biliary sludge and gallstones due to inhibition of gallbladder contraction."
             },
             {
               "id": 212,
