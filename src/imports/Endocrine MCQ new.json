@@ -870,8 +870,8 @@
                 "Gonadotrophs",
                 "Corticotrophs"
               ],
-              "correctAnswer": "B",
-              "explanation": "Mammotrophs contain large (600-700 nm), dense granules."
+              "correctAnswer": "A",
+              "explanation": "Somatotrophs (growth hormone-secreting cells) contain large (300–400 nm), round, electron-dense secretory granules that are tightly packed in the cytoplasm. Mammotrophs (prolactin cells) also have large granules but they are often pleomorphic and less uniformly dense. Thyrotrophs, gonadotrophs, and corticotrophs have smaller or more variable granules, not typically described as both large and closely packed."
             },
             {
               "id": 63,
