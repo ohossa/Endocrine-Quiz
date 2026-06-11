@@ -8152,8 +8152,8 @@
                 "D-1",
                 "PP"
               ],
-              "correctAnswer": "B",
-              "explanation": "Glucagon stimulates somatostatin release from delta cells."
+              "correctAnswer": "A",
+              "explanation": "Alpha cells secrete glucagon, which directly stimulates insulin release from beta cells (paracrine effect)."
             },
             {
               "id": 567,
