@@ -3729,8 +3729,8 @@
                 "Osteoclasts",
                 "Chief"
               ],
-              "correctAnswer": "E",
-              "explanation": "PTH from chief cells stimulates osteoclast activity."
+              "correctAnswer": "B",
+              "explanation": "Osteoblasts secrete factors such as RANKL (receptor activator of nuclear factor kappa-B ligand) and M-CSF, which stimulate osteoclast differentiation and activity. Thus, osteoblasts are the primary source of osteoclast-stimulating factors among the listed cell types."
             },
             {
               "id": 266,
@@ -4423,7 +4423,7 @@
                 "Riedel's thyroiditis",
                 "Hashimoto's thyroiditis",
                 "Granulomatous thyroiditis",
-                "Subacute lymphocytic thyroiditis"
+                "Subacute lymphocytic thyroiditis (is also correct)"
               ],
               "correctAnswer": "C",
               "explanation": "Hashimoto's thyroiditis is autoimmune."
@@ -5531,8 +5531,8 @@
                 "It acts through inhibition of the uptake of thyroid hormones into cells.",
                 "It is used before subtotal thyroidectomy to decrease the size of the gland."
               ],
-              "correctAnswer": "D",
-              "explanation": "RAI can be used preoperatively to reduce gland size, but more commonly antithyroid drugs are used."
+              "correctAnswer": "A",
+              "explanation": "Radioactive iodine (RAI, typically I-131) is selectively taken up by thyroid follicular cells. It emits beta particles that destroy thyroid tissue, making it effective for hyperthyroidism and thyroid cancer remnant ablation."
             },
             {
               "id": 388,
